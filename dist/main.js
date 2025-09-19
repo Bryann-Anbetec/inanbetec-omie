@@ -91,6 +91,7 @@ exports.AppModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const schedule_1 = __webpack_require__(/*! @nestjs/schedule */ "@nestjs/schedule");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const contracts_module_1 = __webpack_require__(/*! ./contracts/contracts.module */ "./src/contracts/contracts.module.ts");
 const clients_module_1 = __webpack_require__(/*! ./clients/clients.module */ "./src/clients/clients.module.ts");
 const shared_module_1 = __webpack_require__(/*! ./shared/shared.module */ "./src/shared/shared.module.ts");
@@ -105,6 +106,19 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 envFilePath: '.env',
+            }),
+            mongoose_1.MongooseModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                useFactory: async (configService) => ({
+                    uri: configService.get('MONGODB_URI'),
+                    dbName: configService.get('MONGODB_DATABASE'),
+                    tls: true,
+                    tlsAllowInvalidCertificates: true,
+                    tlsAllowInvalidHostnames: true,
+                    retryWrites: false,
+                    authMechanism: 'SCRAM-SHA-1',
+                }),
+                inject: [config_1.ConfigService],
             }),
             schedule_1.ScheduleModule.forRoot(),
             shared_module_1.SharedModule,
@@ -375,10 +389,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ClientsModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const clients_controller_1 = __webpack_require__(/*! ./clients.controller */ "./src/clients/clients.controller.ts");
 const client_sync_service_1 = __webpack_require__(/*! ./services/client-sync.service */ "./src/clients/services/client-sync.service.ts");
 const inanbetec_service_1 = __webpack_require__(/*! ./services/inanbetec.service */ "./src/clients/services/inanbetec.service.ts");
 const contracts_module_1 = __webpack_require__(/*! ../contracts/contracts.module */ "./src/contracts/contracts.module.ts");
+const empresa_inanbetec_schema_1 = __webpack_require__(/*! ./schemas/empresa-inanbetec.schema */ "./src/clients/schemas/empresa-inanbetec.schema.ts");
 let ClientsModule = class ClientsModule {
 };
 exports.ClientsModule = ClientsModule;
@@ -387,6 +403,9 @@ exports.ClientsModule = ClientsModule = __decorate([
         imports: [
             axios_1.HttpModule,
             contracts_module_1.ContractsModule,
+            mongoose_1.MongooseModule.forFeature([
+                { name: empresa_inanbetec_schema_1.EmpresaInanbetec.name, schema: empresa_inanbetec_schema_1.EmpresaInanbetecSchema }
+            ]),
         ],
         controllers: [clients_controller_1.ClientsController],
         providers: [
@@ -529,6 +548,137 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], ClientWebhookDto.prototype, "timestamp", void 0);
+
+
+/***/ }),
+
+/***/ "./src/clients/schemas/empresa-inanbetec.schema.ts":
+/*!*********************************************************!*\
+  !*** ./src/clients/schemas/empresa-inanbetec.schema.ts ***!
+  \*********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EmpresaInanbetecSchema = exports.EmpresaInanbetec = void 0;
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+let EmpresaInanbetec = class EmpresaInanbetec {
+};
+exports.EmpresaInanbetec = EmpresaInanbetec;
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "nome", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "razaoSocial", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "nomeFantasia", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "email", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "cnpj", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "cpf", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "telefone", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "celular", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "endereco", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "numero", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "complemento", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "bairro", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "cidade", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "estado", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "cep", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "inscricaoEstadual", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "inscricaoMunicipal", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Boolean)
+], EmpresaInanbetec.prototype, "ativo", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], EmpresaInanbetec.prototype, "dataCriacao", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], EmpresaInanbetec.prototype, "dataAtualizacao", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "tipo", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], EmpresaInanbetec.prototype, "documento", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Number)
+], EmpresaInanbetec.prototype, "idEmpresa", void 0);
+exports.EmpresaInanbetec = EmpresaInanbetec = __decorate([
+    (0, mongoose_1.Schema)({ collection: 'empresas', timestamps: false })
+], EmpresaInanbetec);
+exports.EmpresaInanbetecSchema = mongoose_1.SchemaFactory.createForClass(EmpresaInanbetec);
 
 
 /***/ }),
@@ -683,11 +833,11 @@ let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
             const resultados = [];
             for (const cliente of clientesInanbetec || []) {
                 try {
-                    const resultado = await this.sincronizarClientePorCNPJ(cliente.cnpj_cpf, 'inanbetec');
+                    const resultado = await this.sincronizarClientePorCNPJ(cliente.documento, 'inanbetec');
                     resultados.push(resultado);
                 }
                 catch (error) {
-                    this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.cnpj_cpf}: ${error.message}`);
+                    this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.documento}: ${error.message}`);
                 }
             }
             for (const cliente of clientesOmie?.clientes_cadastro || []) {
@@ -770,61 +920,105 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var InanbetecService_1;
-var _a, _b;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.InanbetecService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const empresa_inanbetec_schema_1 = __webpack_require__(/*! ../schemas/empresa-inanbetec.schema */ "./src/clients/schemas/empresa-inanbetec.schema.ts");
 let InanbetecService = InanbetecService_1 = class InanbetecService {
-    constructor(httpService, configService) {
-        this.httpService = httpService;
-        this.configService = configService;
+    constructor(empresaModel) {
+        this.empresaModel = empresaModel;
         this.logger = new common_1.Logger(InanbetecService_1.name);
-        this.baseURL = this.configService.get('INANBETEC_API_URL', 'https://api.inanbetec.com.br/v1');
     }
     async buscarClientePorCNPJ(cnpj) {
         try {
             this.logger.log(`Buscando cliente na Inanbetec por CNPJ: ${cnpj}`);
-            const url = `${this.baseURL}/clientes/buscar`;
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(url, {
-                params: { cnpj: this.limparDocumento(cnpj) }
-            }));
-            this.logger.log(`Cliente encontrado na Inanbetec: ${JSON.stringify(response.data)}`);
-            return response.data;
+            const cnpjLimpo = this.limparDocumento(cnpj);
+            this.logger.debug(`CNPJ limpo para busca: ${cnpjLimpo}`);
+            const consultas = [
+                { cnpj: cnpjLimpo },
+                { cpf: cnpjLimpo },
+                { cnpj: this.formatarDocumento(cnpjLimpo, 'cnpj') },
+                { cpf: this.formatarDocumento(cnpjLimpo, 'cpf') },
+                { documento: cnpjLimpo },
+                { documento: this.formatarDocumento(cnpjLimpo, 'cnpj') },
+                { 'empresa.cnpj': cnpjLimpo },
+                { 'empresa.documento': cnpjLimpo },
+                { 'dados.cnpj': cnpjLimpo },
+                { 'perfil.cnpj': cnpjLimpo }
+            ];
+            for (const consulta of consultas) {
+                this.logger.debug(`Tentando busca com: ${JSON.stringify(consulta)}`);
+                const empresa = await this.empresaModel.findOne(consulta).exec();
+                if (empresa) {
+                    this.logger.log(`Cliente encontrado na Inanbetec: ${empresa.nome} (${empresa.cpf || empresa.cnpj})`);
+                    return this.mapearEmpresaParaCliente(empresa);
+                }
+            }
+            this.logger.debug('Tentando busca ampla por regex...');
+            const empresaRegex = await this.empresaModel.findOne({
+                $or: [
+                    { cnpj: { $regex: cnpjLimpo } },
+                    { cpf: { $regex: cnpjLimpo } },
+                    { documento: { $regex: cnpjLimpo } }
+                ]
+            }).exec();
+            if (empresaRegex) {
+                this.logger.log(`Cliente encontrado na Inanbetec via regex: ${empresaRegex.nome}`);
+                return this.mapearEmpresaParaCliente(empresaRegex);
+            }
+            const totalEmpresas = await this.empresaModel.countDocuments();
+            this.logger.debug(`Total de empresas na coleção: ${totalEmpresas}`);
+            const exemplos = await this.empresaModel.find().limit(3).exec();
+            this.logger.debug(`Exemplos de documentos: ${JSON.stringify(exemplos.map(e => ({ nome: e.nome, cnpj: e.cnpj, cpf: e.cpf, _id: e._id })))}`);
+            this.logger.log(`Cliente não encontrado na Inanbetec para CNPJ: ${cnpj}`);
+            return null;
         }
         catch (error) {
             this.logger.error(`Erro ao buscar cliente na Inanbetec: ${error.message}`);
-            if (error.response?.status === 404) {
-                return null;
-            }
+            this.logger.error(`Stack trace: ${error.stack}`);
             throw error;
         }
     }
     async criarCliente(clienteData) {
         try {
             this.logger.log(`Criando cliente na Inanbetec: ${JSON.stringify(clienteData)}`);
-            const url = `${this.baseURL}/clientes`;
             const dadosInanbetec = this.mapearParaInanbetec(clienteData);
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(url, dadosInanbetec));
-            this.logger.log(`Cliente criado na Inanbetec: ${JSON.stringify(response.data)}`);
-            return response.data;
+            const novaEmpresa = new this.empresaModel(dadosInanbetec);
+            const resultado = await novaEmpresa.save();
+            this.logger.log(`Cliente criado na Inanbetec: ${resultado._id}`);
+            return resultado;
         }
         catch (error) {
             this.logger.error(`Erro ao criar cliente na Inanbetec: ${error.message}`);
             throw error;
         }
     }
-    async atualizarCliente(clienteId, clienteData) {
+    async atualizarCliente(cnpj, clienteData) {
         try {
-            this.logger.log(`Atualizando cliente na Inanbetec ID: ${clienteId}`);
-            const url = `${this.baseURL}/clientes/${clienteId}`;
+            this.logger.log(`Atualizando cliente na Inanbetec CNPJ: ${cnpj}`);
+            const cnpjLimpo = this.limparDocumento(cnpj);
             const dadosInanbetec = this.mapearParaInanbetec(clienteData);
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.put(url, dadosInanbetec));
-            this.logger.log(`Cliente atualizado na Inanbetec: ${JSON.stringify(response.data)}`);
-            return response.data;
+            const resultado = await this.empresaModel.findOneAndUpdate({
+                $or: [
+                    { cpf: cnpjLimpo },
+                    { cnpj: cnpjLimpo }
+                ]
+            }, dadosInanbetec, { new: true }).exec();
+            if (resultado) {
+                this.logger.log(`Cliente atualizado na Inanbetec: ${resultado._id}`);
+                return resultado;
+            }
+            else {
+                this.logger.log(`Cliente não encontrado para atualização: ${cnpj}`);
+                return null;
+            }
         }
         catch (error) {
             this.logger.error(`Erro ao atualizar cliente na Inanbetec: ${error.message}`);
@@ -834,10 +1028,10 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
     async listarClientes(filtros = {}) {
         try {
             this.logger.log(`Listando clientes na Inanbetec com filtros: ${JSON.stringify(filtros)}`);
-            const url = `${this.baseURL}/clientes`;
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(url, { params: filtros }));
-            this.logger.log(`Lista de clientes retornada da Inanbetec: ${response.data?.length || 0} registros`);
-            return response.data;
+            const query = this.empresaModel.find(filtros);
+            const empresas = await query.exec();
+            this.logger.log(`Lista de clientes retornada da Inanbetec: ${empresas.length} registros`);
+            return empresas.map(empresa => this.mapearEmpresaParaCliente(empresa));
         }
         catch (error) {
             this.logger.error(`Erro ao listar clientes na Inanbetec: ${error.message}`);
@@ -895,11 +1089,54 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
             return '';
         return cep.replace(/[^\d]/g, '');
     }
+    formatarDocumento(documento, tipo) {
+        const limpo = this.limparDocumento(documento);
+        if (tipo === 'cpf' && limpo.length === 11) {
+            return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        else if (tipo === 'cnpj' && limpo.length === 14) {
+            return limpo.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        }
+        return limpo;
+    }
+    mapearEmpresaParaCliente(empresa) {
+        return {
+            id: empresa._id,
+            nome: empresa.nome,
+            razaoSocial: empresa.razaoSocial,
+            nomeFantasia: empresa.nomeFantasia,
+            documento: empresa.cnpj || empresa.cpf,
+            email: empresa.email,
+            telefone: empresa.telefone || empresa.celular,
+            endereco: {
+                endereco: empresa.endereco,
+                numero: empresa.numero,
+                complemento: empresa.complemento,
+                bairro: empresa.bairro,
+                cidade: empresa.cidade,
+                estado: empresa.estado,
+                cep: empresa.cep
+            },
+            idEmpresa: empresa.idEmpresa,
+            ativo: empresa.ativo,
+            origem: 'inanbetec'
+        };
+    }
+    formatarCEP(cep) {
+        if (!cep)
+            return '';
+        const limpo = cep.replace(/\D/g, '');
+        if (limpo.length === 8) {
+            return limpo.replace(/(\d{5})(\d{3})/, '$1-$2');
+        }
+        return limpo;
+    }
 };
 exports.InanbetecService = InanbetecService;
 exports.InanbetecService = InanbetecService = InanbetecService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof axios_1.HttpService !== "undefined" && axios_1.HttpService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
+    __param(0, (0, mongoose_1.InjectModel)(empresa_inanbetec_schema_1.EmpresaInanbetec.name)),
+    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object])
 ], InanbetecService);
 
 
@@ -2222,6 +2459,16 @@ module.exports = require("@nestjs/core");
 
 /***/ }),
 
+/***/ "@nestjs/mongoose":
+/*!***********************************!*\
+  !*** external "@nestjs/mongoose" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/mongoose");
+
+/***/ }),
+
 /***/ "@nestjs/schedule":
 /*!***********************************!*\
   !*** external "@nestjs/schedule" ***!
@@ -2249,6 +2496,16 @@ module.exports = require("@nestjs/swagger");
 /***/ ((module) => {
 
 module.exports = require("class-validator");
+
+/***/ }),
+
+/***/ "mongoose":
+/*!***************************!*\
+  !*** external "mongoose" ***!
+  \***************************/
+/***/ ((module) => {
+
+module.exports = require("mongoose");
 
 /***/ }),
 

@@ -165,10 +165,10 @@ export class ClientSyncService {
       // Sincronizar clientes da Inanbetec
       for (const cliente of clientesInanbetec || []) {
         try {
-          const resultado = await this.sincronizarClientePorCNPJ(cliente.cnpj_cpf, 'inanbetec');
+          const resultado = await this.sincronizarClientePorCNPJ(cliente.documento, 'inanbetec');
           resultados.push(resultado);
         } catch (error) {
-          this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.cnpj_cpf}: ${error.message}`);
+          this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.documento}: ${error.message}`);
         }
       }
 
