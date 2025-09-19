@@ -2,15 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
-import { UsuarioInanbetec, UsuarioInanbetecDocument } from '../../shared/schemas/usuario-inanbetec.schema';
+import { EmpresaInanbetec, EmpresaInanbetecDocument } from '../schemas/empresa-inanbetec.schema';
 
 @Injectable()
 export class InanbetecService {
   private readonly logger = new Logger(InanbetecService.name);
 
   constructor(
-    @InjectModel(UsuarioInanbetec.name) 
-    private usuarioModel: Model<UsuarioInanbetecDocument>,
+    @InjectModel(EmpresaInanbetec.name) 
+    private empresaModel: Model<EmpresaInanbetecDocument>,
     private readonly configService: ConfigService,
   ) {}
 
@@ -20,18 +20,19 @@ export class InanbetecService {
       const cnpjLimpo = this.limparDocumento(cnpj);
       
       // Buscar por CPF/CNPJ no MongoDB
-      const usuario = await this.usuarioModel.findOne({
+      const empresa = await this.empresaModel.findOne({
         $or: [
           { cpf: cnpjLimpo },
           { cnpj: cnpjLimpo },
+          { documento: cnpjLimpo },
           { cpf: this.formatarDocumento(cnpjLimpo, 'cpf') },
           { cnpj: this.formatarDocumento(cnpjLimpo, 'cnpj') }
         ]
       }).exec();
       
-      if (usuario) {
-        this.logger.log(`Cliente encontrado na Inanbetec: ${usuario.nome} (${usuario.cpf || usuario.cnpj})`);
-        return this.mapearUsuarioParaCliente(usuario);
+      if (empresa) {
+        this.logger.log(`Cliente encontrado na Inanbetec: ${empresa.nome} (${empresa.cpf || empresa.cnpj})`);
+        return this.mapearEmpresaParaCliente(empresa);
       }
       
       this.logger.log(`Cliente não encontrado na Inanbetec para CNPJ: ${cnpj}`);
@@ -51,8 +52,8 @@ export class InanbetecService {
       
       const dadosInanbetec = this.mapearParaInanbetec(clienteData);
       
-      const novoUsuario = new this.usuarioModel(dadosInanbetec);
-      const resultado = await novoUsuario.save();
+      const novaEmpresa = new this.empresaModel(dadosInanbetec);
+      const resultado = await novaEmpresa.save();
       
       this.logger.log(`Cliente criado na Inanbetec: ${resultado._id}`);
       return resultado;
@@ -68,7 +69,7 @@ export class InanbetecService {
       
       const dadosInanbetec = this.mapearParaInanbetec(clienteData);
       
-      const resultado = await this.usuarioModel.findByIdAndUpdate(
+      const resultado = await this.empresaModel.findByIdAndUpdate(
         clienteId, 
         dadosInanbetec, 
         { new: true }
@@ -86,67 +87,81 @@ export class InanbetecService {
     try {
       this.logger.log(`Listando clientes na Inanbetec com filtros: ${JSON.stringify(filtros)}`);
       
-      const query = this.usuarioModel.find();
+      const query = this.empresaModel.find();
       
       // Aplicar filtros se fornecidos
       if (filtros.modificado_apos) {
-        query.where('dataCadastro').gte(new Date(filtros.modificado_apos).getTime());
+        query.where('dataCriacao').gte(new Date(filtros.modificado_apos).getTime());
       }
       
       if (filtros.idEmpresa) {
         query.where('idEmpresa').equals(filtros.idEmpresa);
       }
       
-      const usuarios = await query.exec();
+      const empresas = await query.exec();
       
-      this.logger.log(`Lista de clientes retornada da Inanbetec: ${usuarios.length} registros`);
-      return usuarios.map(usuario => this.mapearUsuarioParaCliente(usuario));
+      this.logger.log(`Lista de clientes retornada da Inanbetec: ${empresas.length} registros`);
+      return empresas.map(empresa => this.mapearEmpresaParaCliente(empresa));
     } catch (error) {
       this.logger.error(`Erro ao listar clientes na Inanbetec: ${error.message}`);
       throw error;
     }
   }
 
-  private mapearUsuarioParaCliente(usuario: UsuarioInanbetecDocument) {
-    // Mapear dados do usuário do MongoDB para formato de cliente
+  private mapearEmpresaParaCliente(empresa: EmpresaInanbetecDocument) {
+    // Mapear dados da empresa do MongoDB para formato de cliente
     return {
-      id: usuario._id,
-      cnpj_cpf: usuario.cpf || usuario.cnpj,
-      razao_social: usuario.nome,
-      nome_fantasia: usuario.nome,
-      email: usuario.email,
-      telefone: usuario.telefone,
+      id: empresa._id,
+      cnpj_cpf: empresa.cpf || empresa.cnpj || empresa.documento,
+      razao_social: empresa.razaoSocial || empresa.nome,
+      nome_fantasia: empresa.nomeFantasia || empresa.nome,
+      email: empresa.email,
+      telefone: empresa.telefone || empresa.celular,
       endereco: {
-        // Como os usuários não têm endereço completo, vamos usar dados básicos
-        endereco: '',
-        numero: '',
-        complemento: '',
-        bairro: '',
-        cidade: '',
-        estado: '',
-        cep: ''
+        endereco: empresa.endereco || '',
+        numero: empresa.numero || '',
+        complemento: empresa.complemento || '',
+        bairro: empresa.bairro || '',
+        cidade: empresa.cidade || '',
+        estado: empresa.estado || '',
+        cep: empresa.cep || ''
       },
-      data_cadastro: usuario.dataCadastro,
+      data_cadastro: empresa.dataCriacao,
       origem: 'inanbetec'
     };
   }
 
   private mapearParaInanbetec(clienteOmie: any) {
-    // Mapear dados do formato Omie para o formato usuário Inanbetec
+    // Mapear dados do formato Omie para o formato EmpresaInanbetec
+    // Logar os dados para debug
+    this.logger.debug(`Dados do cliente Omie para mapeamento: ${JSON.stringify(clienteOmie, null, 2)}`);
+    
     return {
-      nome: clienteOmie.razao_social || clienteOmie.nome,
-      email: clienteOmie.email,
-      telefone: clienteOmie.telefone1_numero || clienteOmie.telefone,
-      cpf: this.isCPF(clienteOmie.cnpj_cpf) ? this.formatarDocumento(clienteOmie.cnpj_cpf, 'cpf') : undefined,
-      cnpj: this.isCNPJ(clienteOmie.cnpj_cpf) ? this.formatarDocumento(clienteOmie.cnpj_cpf, 'cnpj') : undefined,
-      idEmpresa: this.configService.get<number>('INANBETEC_EMPRESA_ID', 258),
-      dataCadastro: new Date(),
-      senha: '$2a$08$defaulthash', // Hash padrão
-      perfil: {
-        nome: 'Cliente Sincronizado',
-        modulos: [],
-        idEmpresa: this.configService.get<string>('INANBETEC_EMPRESA_ID', '258')
-      }
+      nome: clienteOmie.razao_social || clienteOmie.nome_fantasia || '',
+      razaoSocial: clienteOmie.razao_social || '',
+      nomeFantasia: clienteOmie.nome_fantasia || clienteOmie.razao_social || '',
+      email: clienteOmie.email || '',
+      telefone: clienteOmie.telefone1_numero || '',
+      celular: clienteOmie.telefone1_numero || '',
+      cpf: this.isCPF(clienteOmie.cnpj_cpf) ? this.limparDocumento(clienteOmie.cnpj_cpf) : undefined,
+      cnpj: this.isCNPJ(clienteOmie.cnpj_cpf) ? this.limparDocumento(clienteOmie.cnpj_cpf) : undefined,
+      documento: this.limparDocumento(clienteOmie.cnpj_cpf),
+      // Endereço como campos individuais baseados na estrutura real do Omie
+      endereco: clienteOmie.endereco || '',
+      numero: clienteOmie.endereco_numero || '',
+      complemento: clienteOmie.complemento || '',
+      bairro: clienteOmie.bairro || '',
+      cidade: clienteOmie.cidade ? clienteOmie.cidade.replace(/\s*\([^)]*\)/, '') : '', // Remove "(UF)" da cidade
+      estado: clienteOmie.estado || '',
+      cep: this.limparCEP(clienteOmie.cep) || '',
+      inscricaoEstadual: clienteOmie.inscricao_estadual || '',
+      inscricaoMunicipal: clienteOmie.inscricao_municipal || '',
+      ativo: true,
+      dataCriacao: new Date(),
+      dataAtualizacao: new Date(),
+      tipo: 'cliente',
+      status: 'ativo',
+      idEmpresa: this.configService.get<number>('INANBETEC_EMPRESA_ID', 258)
     };
   }
 

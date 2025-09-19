@@ -205,7 +205,7 @@ exports.ClientsController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const client_sync_service_1 = __webpack_require__(/*! ./services/client-sync.service */ "./src/clients/services/client-sync.service.ts");
-const inanbetec_service_1 = __webpack_require__(/*! ./services/inanbetec.service */ "./src/clients/services/inanbetec.service.ts");
+const inanbetec_mongo_service_1 = __webpack_require__(/*! ./services/inanbetec-mongo.service */ "./src/clients/services/inanbetec-mongo.service.ts");
 const client_dto_1 = __webpack_require__(/*! ./dto/client.dto */ "./src/clients/dto/client.dto.ts");
 let ClientsController = ClientsController_1 = class ClientsController {
     constructor(clientSyncService, inanbetecService) {
@@ -366,7 +366,7 @@ __decorate([
 exports.ClientsController = ClientsController = ClientsController_1 = __decorate([
     (0, swagger_1.ApiTags)('clientes'),
     (0, common_1.Controller)('clientes'),
-    __metadata("design:paramtypes", [typeof (_a = typeof client_sync_service_1.ClientSyncService !== "undefined" && client_sync_service_1.ClientSyncService) === "function" ? _a : Object, typeof (_b = typeof inanbetec_service_1.InanbetecService !== "undefined" && inanbetec_service_1.InanbetecService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof client_sync_service_1.ClientSyncService !== "undefined" && client_sync_service_1.ClientSyncService) === "function" ? _a : Object, typeof (_b = typeof inanbetec_mongo_service_1.InanbetecService !== "undefined" && inanbetec_mongo_service_1.InanbetecService) === "function" ? _b : Object])
 ], ClientsController);
 
 
@@ -392,7 +392,7 @@ const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
 const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const clients_controller_1 = __webpack_require__(/*! ./clients.controller */ "./src/clients/clients.controller.ts");
 const client_sync_service_1 = __webpack_require__(/*! ./services/client-sync.service */ "./src/clients/services/client-sync.service.ts");
-const inanbetec_service_1 = __webpack_require__(/*! ./services/inanbetec.service */ "./src/clients/services/inanbetec.service.ts");
+const inanbetec_mongo_service_1 = __webpack_require__(/*! ./services/inanbetec-mongo.service */ "./src/clients/services/inanbetec-mongo.service.ts");
 const contracts_module_1 = __webpack_require__(/*! ../contracts/contracts.module */ "./src/contracts/contracts.module.ts");
 const empresa_inanbetec_schema_1 = __webpack_require__(/*! ./schemas/empresa-inanbetec.schema */ "./src/clients/schemas/empresa-inanbetec.schema.ts");
 let ClientsModule = class ClientsModule {
@@ -410,11 +410,11 @@ exports.ClientsModule = ClientsModule = __decorate([
         controllers: [clients_controller_1.ClientsController],
         providers: [
             client_sync_service_1.ClientSyncService,
-            inanbetec_service_1.InanbetecService,
+            inanbetec_mongo_service_1.InanbetecService,
         ],
         exports: [
             client_sync_service_1.ClientSyncService,
-            inanbetec_service_1.InanbetecService,
+            inanbetec_mongo_service_1.InanbetecService,
         ],
     })
 ], ClientsModule);
@@ -578,10 +578,6 @@ exports.EmpresaInanbetec = EmpresaInanbetec;
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
-], EmpresaInanbetec.prototype, "_id", void 0);
-__decorate([
-    (0, mongoose_1.Prop)(),
-    __metadata("design:type", String)
 ], EmpresaInanbetec.prototype, "nome", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
@@ -705,7 +701,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ClientSyncService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const schedule_1 = __webpack_require__(/*! @nestjs/schedule */ "@nestjs/schedule");
-const inanbetec_service_1 = __webpack_require__(/*! ./inanbetec.service */ "./src/clients/services/inanbetec.service.ts");
+const inanbetec_mongo_service_1 = __webpack_require__(/*! ./inanbetec-mongo.service */ "./src/clients/services/inanbetec-mongo.service.ts");
 const omie_service_1 = __webpack_require__(/*! ../../contracts/services/omie.service */ "./src/contracts/services/omie.service.ts");
 let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
     constructor(inanbetecService, omieService) {
@@ -833,11 +829,11 @@ let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
             const resultados = [];
             for (const cliente of clientesInanbetec || []) {
                 try {
-                    const resultado = await this.sincronizarClientePorCNPJ(cliente.documento, 'inanbetec');
+                    const resultado = await this.sincronizarClientePorCNPJ(cliente.cnpj_cpf, 'inanbetec');
                     resultados.push(resultado);
                 }
                 catch (error) {
-                    this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.documento}: ${error.message}`);
+                    this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.cnpj_cpf}: ${error.message}`);
                 }
             }
             for (const cliente of clientesOmie?.clientes_cadastro || []) {
@@ -898,16 +894,16 @@ __decorate([
 ], ClientSyncService.prototype, "sincronizacaoAutomatica", null);
 exports.ClientSyncService = ClientSyncService = ClientSyncService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof inanbetec_service_1.InanbetecService !== "undefined" && inanbetec_service_1.InanbetecService) === "function" ? _a : Object, typeof (_b = typeof omie_service_1.OmieService !== "undefined" && omie_service_1.OmieService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof inanbetec_mongo_service_1.InanbetecService !== "undefined" && inanbetec_mongo_service_1.InanbetecService) === "function" ? _a : Object, typeof (_b = typeof omie_service_1.OmieService !== "undefined" && omie_service_1.OmieService) === "function" ? _b : Object])
 ], ClientSyncService);
 
 
 /***/ }),
 
-/***/ "./src/clients/services/inanbetec.service.ts":
-/*!***************************************************!*\
-  !*** ./src/clients/services/inanbetec.service.ts ***!
-  \***************************************************/
+/***/ "./src/clients/services/inanbetec-mongo.service.ts":
+/*!*********************************************************!*\
+  !*** ./src/clients/services/inanbetec-mongo.service.ts ***!
+  \*********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -924,65 +920,45 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var InanbetecService_1;
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.InanbetecService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const empresa_inanbetec_schema_1 = __webpack_require__(/*! ../schemas/empresa-inanbetec.schema */ "./src/clients/schemas/empresa-inanbetec.schema.ts");
 let InanbetecService = InanbetecService_1 = class InanbetecService {
-    constructor(empresaModel) {
+    constructor(empresaModel, configService) {
         this.empresaModel = empresaModel;
+        this.configService = configService;
         this.logger = new common_1.Logger(InanbetecService_1.name);
     }
     async buscarClientePorCNPJ(cnpj) {
         try {
             this.logger.log(`Buscando cliente na Inanbetec por CNPJ: ${cnpj}`);
             const cnpjLimpo = this.limparDocumento(cnpj);
-            this.logger.debug(`CNPJ limpo para busca: ${cnpjLimpo}`);
-            const consultas = [
-                { cnpj: cnpjLimpo },
-                { cpf: cnpjLimpo },
-                { cnpj: this.formatarDocumento(cnpjLimpo, 'cnpj') },
-                { cpf: this.formatarDocumento(cnpjLimpo, 'cpf') },
-                { documento: cnpjLimpo },
-                { documento: this.formatarDocumento(cnpjLimpo, 'cnpj') },
-                { 'empresa.cnpj': cnpjLimpo },
-                { 'empresa.documento': cnpjLimpo },
-                { 'dados.cnpj': cnpjLimpo },
-                { 'perfil.cnpj': cnpjLimpo }
-            ];
-            for (const consulta of consultas) {
-                this.logger.debug(`Tentando busca com: ${JSON.stringify(consulta)}`);
-                const empresa = await this.empresaModel.findOne(consulta).exec();
-                if (empresa) {
-                    this.logger.log(`Cliente encontrado na Inanbetec: ${empresa.nome} (${empresa.cpf || empresa.cnpj})`);
-                    return this.mapearEmpresaParaCliente(empresa);
-                }
-            }
-            this.logger.debug('Tentando busca ampla por regex...');
-            const empresaRegex = await this.empresaModel.findOne({
+            const empresa = await this.empresaModel.findOne({
                 $or: [
-                    { cnpj: { $regex: cnpjLimpo } },
-                    { cpf: { $regex: cnpjLimpo } },
-                    { documento: { $regex: cnpjLimpo } }
+                    { cpf: cnpjLimpo },
+                    { cnpj: cnpjLimpo },
+                    { documento: cnpjLimpo },
+                    { cpf: this.formatarDocumento(cnpjLimpo, 'cpf') },
+                    { cnpj: this.formatarDocumento(cnpjLimpo, 'cnpj') }
                 ]
             }).exec();
-            if (empresaRegex) {
-                this.logger.log(`Cliente encontrado na Inanbetec via regex: ${empresaRegex.nome}`);
-                return this.mapearEmpresaParaCliente(empresaRegex);
+            if (empresa) {
+                this.logger.log(`Cliente encontrado na Inanbetec: ${empresa.nome} (${empresa.cpf || empresa.cnpj})`);
+                return this.mapearEmpresaParaCliente(empresa);
             }
-            const totalEmpresas = await this.empresaModel.countDocuments();
-            this.logger.debug(`Total de empresas na coleção: ${totalEmpresas}`);
-            const exemplos = await this.empresaModel.find().limit(3).exec();
-            this.logger.debug(`Exemplos de documentos: ${JSON.stringify(exemplos.map(e => ({ nome: e.nome, cnpj: e.cnpj, cpf: e.cpf, _id: e._id })))}`);
             this.logger.log(`Cliente não encontrado na Inanbetec para CNPJ: ${cnpj}`);
             return null;
         }
         catch (error) {
             this.logger.error(`Erro ao buscar cliente na Inanbetec: ${error.message}`);
-            this.logger.error(`Stack trace: ${error.stack}`);
+            if (error.response?.status === 404) {
+                return null;
+            }
             throw error;
         }
     }
@@ -1000,25 +976,13 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
             throw error;
         }
     }
-    async atualizarCliente(cnpj, clienteData) {
+    async atualizarCliente(clienteId, clienteData) {
         try {
-            this.logger.log(`Atualizando cliente na Inanbetec CNPJ: ${cnpj}`);
-            const cnpjLimpo = this.limparDocumento(cnpj);
+            this.logger.log(`Atualizando cliente na Inanbetec ID: ${clienteId}`);
             const dadosInanbetec = this.mapearParaInanbetec(clienteData);
-            const resultado = await this.empresaModel.findOneAndUpdate({
-                $or: [
-                    { cpf: cnpjLimpo },
-                    { cnpj: cnpjLimpo }
-                ]
-            }, dadosInanbetec, { new: true }).exec();
-            if (resultado) {
-                this.logger.log(`Cliente atualizado na Inanbetec: ${resultado._id}`);
-                return resultado;
-            }
-            else {
-                this.logger.log(`Cliente não encontrado para atualização: ${cnpj}`);
-                return null;
-            }
+            const resultado = await this.empresaModel.findByIdAndUpdate(clienteId, dadosInanbetec, { new: true }).exec();
+            this.logger.log(`Cliente atualizado na Inanbetec: ${resultado?._id}`);
+            return resultado;
         }
         catch (error) {
             this.logger.error(`Erro ao atualizar cliente na Inanbetec: ${error.message}`);
@@ -1028,7 +992,13 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
     async listarClientes(filtros = {}) {
         try {
             this.logger.log(`Listando clientes na Inanbetec com filtros: ${JSON.stringify(filtros)}`);
-            const query = this.empresaModel.find(filtros);
+            const query = this.empresaModel.find();
+            if (filtros.modificado_apos) {
+                query.where('dataCriacao').gte(new Date(filtros.modificado_apos).getTime());
+            }
+            if (filtros.idEmpresa) {
+                query.where('idEmpresa').equals(filtros.idEmpresa);
+            }
             const empresas = await query.exec();
             this.logger.log(`Lista de clientes retornada da Inanbetec: ${empresas.length} registros`);
             return empresas.map(empresa => this.mapearEmpresaParaCliente(empresa));
@@ -1038,22 +1008,54 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
             throw error;
         }
     }
-    mapearParaInanbetec(clienteOmie) {
+    mapearEmpresaParaCliente(empresa) {
         return {
-            cnpj_cpf: clienteOmie.cnpj_cpf || clienteOmie.documento,
-            razao_social: clienteOmie.razao_social || clienteOmie.nome,
-            nome_fantasia: clienteOmie.nome_fantasia || clienteOmie.nomeFantasia,
-            email: clienteOmie.email,
-            telefone1: clienteOmie.telefone1_numero || clienteOmie.telefone,
+            id: empresa._id,
+            cnpj_cpf: empresa.cpf || empresa.cnpj || empresa.documento,
+            razao_social: empresa.razaoSocial || empresa.nome,
+            nome_fantasia: empresa.nomeFantasia || empresa.nome,
+            email: empresa.email,
+            telefone: empresa.telefone || empresa.celular,
             endereco: {
-                logradouro: clienteOmie.endereco?.endereco || clienteOmie.endereco?.logradouro,
-                numero: clienteOmie.endereco?.numero,
-                complemento: clienteOmie.endereco?.complemento,
-                bairro: clienteOmie.endereco?.bairro,
-                cidade: clienteOmie.endereco?.cidade,
-                estado: clienteOmie.endereco?.estado,
-                cep: clienteOmie.endereco?.cep
-            }
+                endereco: empresa.endereco || '',
+                numero: empresa.numero || '',
+                complemento: empresa.complemento || '',
+                bairro: empresa.bairro || '',
+                cidade: empresa.cidade || '',
+                estado: empresa.estado || '',
+                cep: empresa.cep || ''
+            },
+            data_cadastro: empresa.dataCriacao,
+            origem: 'inanbetec'
+        };
+    }
+    mapearParaInanbetec(clienteOmie) {
+        this.logger.debug(`Dados do cliente Omie para mapeamento: ${JSON.stringify(clienteOmie, null, 2)}`);
+        return {
+            nome: clienteOmie.razao_social || clienteOmie.nome_fantasia || '',
+            razaoSocial: clienteOmie.razao_social || '',
+            nomeFantasia: clienteOmie.nome_fantasia || clienteOmie.razao_social || '',
+            email: clienteOmie.email || '',
+            telefone: clienteOmie.telefone1_numero || '',
+            celular: clienteOmie.telefone1_numero || '',
+            cpf: this.isCPF(clienteOmie.cnpj_cpf) ? this.limparDocumento(clienteOmie.cnpj_cpf) : undefined,
+            cnpj: this.isCNPJ(clienteOmie.cnpj_cpf) ? this.limparDocumento(clienteOmie.cnpj_cpf) : undefined,
+            documento: this.limparDocumento(clienteOmie.cnpj_cpf),
+            endereco: clienteOmie.endereco || '',
+            numero: clienteOmie.endereco_numero || '',
+            complemento: clienteOmie.complemento || '',
+            bairro: clienteOmie.bairro || '',
+            cidade: clienteOmie.cidade ? clienteOmie.cidade.replace(/\s*\([^)]*\)/, '') : '',
+            estado: clienteOmie.estado || '',
+            cep: this.limparCEP(clienteOmie.cep) || '',
+            inscricaoEstadual: clienteOmie.inscricao_estadual || '',
+            inscricaoMunicipal: clienteOmie.inscricao_municipal || '',
+            ativo: true,
+            dataCriacao: new Date(),
+            dataAtualizacao: new Date(),
+            tipo: 'cliente',
+            status: 'ativo',
+            idEmpresa: this.configService.get('INANBETEC_EMPRESA_ID', 258)
         };
     }
     mapearParaOmie(clienteInanbetec) {
@@ -1064,7 +1066,7 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
             email: clienteInanbetec.email,
             telefone1_numero: clienteInanbetec.telefone,
             endereco: {
-                endereco: clienteInanbetec.endereco?.logradouro,
+                endereco: clienteInanbetec.endereco?.endereco,
                 numero: clienteInanbetec.endereco?.numero,
                 complemento: clienteInanbetec.endereco?.complemento,
                 bairro: clienteInanbetec.endereco?.bairro,
@@ -1079,6 +1081,24 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
             ]
         };
     }
+    formatarDocumento(documento, tipo) {
+        const limpo = this.limparDocumento(documento);
+        if (tipo === 'cpf' && limpo.length === 11) {
+            return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        else if (tipo === 'cnpj' && limpo.length === 14) {
+            return limpo.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        }
+        return documento;
+    }
+    isCPF(documento) {
+        const limpo = this.limparDocumento(documento);
+        return limpo.length === 11;
+    }
+    isCNPJ(documento) {
+        const limpo = this.limparDocumento(documento);
+        return limpo.length === 14;
+    }
     limparDocumento(documento) {
         if (!documento)
             return '';
@@ -1089,54 +1109,12 @@ let InanbetecService = InanbetecService_1 = class InanbetecService {
             return '';
         return cep.replace(/[^\d]/g, '');
     }
-    formatarDocumento(documento, tipo) {
-        const limpo = this.limparDocumento(documento);
-        if (tipo === 'cpf' && limpo.length === 11) {
-            return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        }
-        else if (tipo === 'cnpj' && limpo.length === 14) {
-            return limpo.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-        }
-        return limpo;
-    }
-    mapearEmpresaParaCliente(empresa) {
-        return {
-            id: empresa._id,
-            nome: empresa.nome,
-            razaoSocial: empresa.razaoSocial,
-            nomeFantasia: empresa.nomeFantasia,
-            documento: empresa.cnpj || empresa.cpf,
-            email: empresa.email,
-            telefone: empresa.telefone || empresa.celular,
-            endereco: {
-                endereco: empresa.endereco,
-                numero: empresa.numero,
-                complemento: empresa.complemento,
-                bairro: empresa.bairro,
-                cidade: empresa.cidade,
-                estado: empresa.estado,
-                cep: empresa.cep
-            },
-            idEmpresa: empresa.idEmpresa,
-            ativo: empresa.ativo,
-            origem: 'inanbetec'
-        };
-    }
-    formatarCEP(cep) {
-        if (!cep)
-            return '';
-        const limpo = cep.replace(/\D/g, '');
-        if (limpo.length === 8) {
-            return limpo.replace(/(\d{5})(\d{3})/, '$1-$2');
-        }
-        return limpo;
-    }
 };
 exports.InanbetecService = InanbetecService;
 exports.InanbetecService = InanbetecService = InanbetecService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(empresa_inanbetec_schema_1.EmpresaInanbetec.name)),
-    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
 ], InanbetecService);
 
 

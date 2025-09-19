@@ -15,7 +15,7 @@ import {
   ApiQuery 
 } from '@nestjs/swagger';
 import { ClientSyncService } from './services/client-sync.service';
-import { InanbetecService } from './services/inanbetec.service';
+import { InanbetecService } from './services/inanbetec-mongo.service';
 import { 
   CreateClientDto, 
   SyncClientDto, 

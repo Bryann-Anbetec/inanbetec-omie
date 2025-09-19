@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InanbetecService } from './inanbetec.service';
+import { InanbetecService } from './inanbetec-mongo.service';
 import { OmieService } from '../../contracts/services/omie.service';
 
 @Injectable()
@@ -80,7 +80,7 @@ export class ClientSyncService {
           };
         } else {
           // Atualizar Inanbetec com dados do Omie
-          await this.inanbetecService.atualizarCliente(dadosInanbetec.id, dadosOmie);
+          await this.inanbetecService.atualizarCliente(String(dadosInanbetec.id), dadosOmie);
           resultado.acoes.push('atualizado_na_inanbetec');
           resultado.detalhes = {
             origem: 'omie',
@@ -165,10 +165,10 @@ export class ClientSyncService {
       // Sincronizar clientes da Inanbetec
       for (const cliente of clientesInanbetec || []) {
         try {
-          const resultado = await this.sincronizarClientePorCNPJ(cliente.documento, 'inanbetec');
+          const resultado = await this.sincronizarClientePorCNPJ(cliente.cnpj_cpf, 'inanbetec');
           resultados.push(resultado);
         } catch (error) {
-          this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.documento}: ${error.message}`);
+          this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.cnpj_cpf}: ${error.message}`);
         }
       }
 

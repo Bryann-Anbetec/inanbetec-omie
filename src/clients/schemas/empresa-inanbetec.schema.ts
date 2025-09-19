@@ -6,9 +6,6 @@ export type EmpresaInanbetecDocument = EmpresaInanbetec & Document;
 @Schema({ collection: 'empresas', timestamps: false })
 export class EmpresaInanbetec {
   @Prop()
-  _id?: string;
-
-  @Prop()
   nome?: string;
 
   @Prop()
