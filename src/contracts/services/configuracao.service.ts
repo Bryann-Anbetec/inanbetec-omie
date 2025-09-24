@@ -151,7 +151,7 @@ export class ConfiguracaoService {
         258: {
           empresaId: 258,
           nomeEmpresa: 'Empresa 258 - InAnbetec',
-          codigoClienteOmie: 1234568, // TODO: Definir valor real
+          codigoClienteOmie: 2370765, // Usando código válido até descobrir o real
           ativo: true,
           configuracao: {
             tipoFaturamento: '01',
@@ -179,6 +179,12 @@ export class ConfiguracaoService {
               },
               'pixpay': {
                 codServico: 1004,
+                codLC116: '3.05',
+                natOperacao: '01',
+                aliqISS: 5.0
+              },
+              'webcheckout': {
+                codServico: 1005,
                 codLC116: '3.05',
                 natOperacao: '01',
                 aliqISS: 5.0

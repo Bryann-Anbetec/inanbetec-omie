@@ -1493,7 +1493,7 @@ let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
                 258: {
                     empresaId: 258,
                     nomeEmpresa: 'Empresa 258 - InAnbetec',
-                    codigoClienteOmie: 1234568,
+                    codigoClienteOmie: 2370765,
                     ativo: true,
                     configuracao: {
                         tipoFaturamento: '01',
@@ -1521,6 +1521,12 @@ let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
                             },
                             'pixpay': {
                                 codServico: 1004,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'webcheckout': {
+                                codServico: 1005,
                                 codLC116: '3.05',
                                 natOperacao: '01',
                                 aliqISS: 5.0
@@ -2589,9 +2595,15 @@ let ContractsService = ContractsService_1 = class ContractsService {
         const { competencia, empresaId, proposta: numeroProposta, valorTotal, produtos } = registroConsolidacao;
         const configEmpresa = await this.configuracaoService.obterConfiguracaoEmpresa(empresaId);
         const [ano, mes] = competencia.split('-');
-        const cCodIntCtr = `CTR-${ano}-${mes}-EMP${empresaId}-PROP-${numeroProposta}`;
+        const anoCompacto = ano.slice(-2);
+        const propCompacta = numeroProposta.slice(-6);
+        const cCodIntCtr = `EMP${empresaId}-${anoCompacto}${mes}-${propCompacta}`;
+        if (cCodIntCtr.length > 20) {
+            this.logger.warn(`⚠️ Código de integração truncado: ${cCodIntCtr} (${cCodIntCtr.length} chars)`);
+        }
         const descricaoProdutos = produtos.map(p => p.nome).join(', ');
         const descricaoCompleta = `Serviços do período ${mes}/${ano} — Proposta ${numeroProposta} — Produtos: ${descricaoProdutos}`;
+        this.logger.log(`📋 Código integração: ${cCodIntCtr} (${cCodIntCtr.length} caracteres)`);
         return {
             cabecalho: {
                 cCodIntCtr: cCodIntCtr,
@@ -2906,11 +2918,15 @@ let OmieService = OmieService_1 = class OmieService {
                 param: [params]
             };
             this.logger.log(`Chamando API Omie - Método: ${method}`);
+            this.logger.debug(`Payload completo: ${JSON.stringify(payload, null, 2)}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(this.baseURL, payload));
             return response.data;
         }
         catch (error) {
             this.logger.error(`Erro na chamada da API Omie: ${error.message}`);
+            if (error.response?.data) {
+                this.logger.error(`Resposta da API Omie: ${JSON.stringify(error.response.data)}`);
+            }
             throw error;
         }
     }

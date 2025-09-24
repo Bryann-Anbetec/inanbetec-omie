@@ -635,12 +635,22 @@ export class ContractsService {
     // Obter configuração da empresa
     const configEmpresa = await this.configuracaoService.obterConfiguracaoEmpresa(empresaId);
     
-    // Gerar código único: CTR-{AAAA}-{MM}-EMP{empresaId}-PROP-{numeroProposta}
+    // CORRIGIDO: Código mais compacto (máximo 20 caracteres)
+    // Formato: EMP{ID}-{AAMM}-{PROP} onde PROP são os últimos 6 dígitos da proposta
     const [ano, mes] = competencia.split('-');
-    const cCodIntCtr = `CTR-${ano}-${mes}-EMP${empresaId}-PROP-${numeroProposta}`;
+    const anoCompacto = ano.slice(-2); // Últimos 2 dígitos do ano
+    const propCompacta = numeroProposta.slice(-6); // Últimos 6 dígitos da proposta
+    const cCodIntCtr = `EMP${empresaId}-${anoCompacto}${mes}-${propCompacta}`;
+    
+    // Verificar se não excede 20 caracteres
+    if (cCodIntCtr.length > 20) {
+      this.logger.warn(`⚠️ Código de integração truncado: ${cCodIntCtr} (${cCodIntCtr.length} chars)`);
+    }
     
     const descricaoProdutos = produtos.map(p => p.nome).join(', ');
     const descricaoCompleta = `Serviços do período ${mes}/${ano} — Proposta ${numeroProposta} — Produtos: ${descricaoProdutos}`;
+    
+    this.logger.log(`📋 Código integração: ${cCodIntCtr} (${cCodIntCtr.length} caracteres)`);
     
     return {
       cabecalho: {

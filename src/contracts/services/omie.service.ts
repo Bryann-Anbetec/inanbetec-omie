@@ -33,6 +33,8 @@ export class OmieService {
       };
 
       this.logger.log(`Chamando API Omie - Método: ${method}`);
+      this.logger.debug(`Payload completo: ${JSON.stringify(payload, null, 2)}`);
+      
       const response = await firstValueFrom(
         this.httpService.post(this.baseURL, payload)
       );
@@ -40,6 +42,9 @@ export class OmieService {
       return (response as any).data;
     } catch (error) {
       this.logger.error(`Erro na chamada da API Omie: ${error.message}`);
+      if (error.response?.data) {
+        this.logger.error(`Resposta da API Omie: ${JSON.stringify(error.response.data)}`);
+      }
       throw error;
     }
   }
