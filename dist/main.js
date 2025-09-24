@@ -199,31 +199,18 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var ClientsController_1;
-var _a, _b, _c, _d, _e;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ClientsController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const client_sync_service_1 = __webpack_require__(/*! ./services/client-sync.service */ "./src/clients/services/client-sync.service.ts");
 const inanbetec_mongo_service_1 = __webpack_require__(/*! ./services/inanbetec-mongo.service */ "./src/clients/services/inanbetec-mongo.service.ts");
-const client_dto_1 = __webpack_require__(/*! ./dto/client.dto */ "./src/clients/dto/client.dto.ts");
 let ClientsController = ClientsController_1 = class ClientsController {
     constructor(clientSyncService, inanbetecService) {
         this.clientSyncService = clientSyncService;
         this.inanbetecService = inanbetecService;
         this.logger = new common_1.Logger(ClientsController_1.name);
-    }
-    async sincronizarCliente(dto) {
-        this.logger.log(`Sincronizando cliente CNPJ: ${dto.documento}`);
-        return this.clientSyncService.sincronizarClientePorCNPJ(dto.documento, dto.origem);
-    }
-    async webhookInanbetec(dto) {
-        this.logger.log(`Webhook Inanbetec recebido - Evento: ${dto.evento}`);
-        return this.clientSyncService.processarWebhookCliente(dto.evento, dto.cliente, 'inanbetec');
-    }
-    async webhookOmie(dto) {
-        this.logger.log(`Webhook Omie recebido - Evento: ${dto.evento}`);
-        return this.clientSyncService.processarWebhookCliente(dto.evento, dto.cliente, 'omie');
     }
     async buscarCliente(cnpj) {
         this.logger.log(`Buscando cliente CNPJ: ${cnpj}`);
@@ -258,61 +245,26 @@ let ClientsController = ClientsController_1 = class ClientsController {
             limite: limite || 50
         });
     }
-    async sincronizacaoManual() {
-        this.logger.log('Executando sincronização manual de clientes');
-        return this.clientSyncService.sincronizacaoAutomatica();
-    }
-    async statusSincronizacao() {
+    async statusSistema() {
         return {
-            sincronizacaoAutomatica: 'ativa',
-            proximaExecucao: 'a cada hora',
-            ultimaExecucao: new Date().toISOString(),
-            status: 'funcionando',
-            webhooks: {
-                inanbetec: '/clientes/webhook/inanbetec',
-                omie: '/clientes/webhook/omie'
-            }
+            sincronizacaoAutomatica: 'DESABILITADA',
+            motivo: 'Sistema em modo somente leitura por segurança',
+            operacoesPermitidas: [
+                'Busca de clientes por CNPJ',
+                'Listagem de clientes Inanbetec'
+            ],
+            operacoesDesabilitadas: [
+                'Sincronização manual',
+                'Webhooks de modificação',
+                'Criação de novos clientes',
+                'Atualização de dados'
+            ],
+            dataDesabilitacao: '2024-12-19',
+            status: 'MODO SEGURO ATIVO'
         };
     }
 };
 exports.ClientsController = ClientsController;
-__decorate([
-    (0, common_1.Post)('sincronizar'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Sincronizar cliente por CNPJ',
-        description: 'Sincroniza um cliente entre Inanbetec e Omie baseado no CNPJ. Se o cliente existir apenas em uma plataforma, será criado na outra.'
-    }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Cliente sincronizado com sucesso' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Erro na sincronização' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof client_dto_1.SyncClientDto !== "undefined" && client_dto_1.SyncClientDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], ClientsController.prototype, "sincronizarCliente", null);
-__decorate([
-    (0, common_1.Post)('webhook/inanbetec'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Webhook para eventos de cliente da Inanbetec',
-        description: 'Recebe webhooks da Inanbetec quando um cliente é criado, atualizado ou excluído'
-    }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Webhook processado com sucesso' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof client_dto_1.ClientWebhookDto !== "undefined" && client_dto_1.ClientWebhookDto) === "function" ? _d : Object]),
-    __metadata("design:returntype", Promise)
-], ClientsController.prototype, "webhookInanbetec", null);
-__decorate([
-    (0, common_1.Post)('webhook/omie'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Webhook para eventos de cliente do Omie',
-        description: 'Recebe webhooks do Omie quando um cliente é criado, atualizado ou excluído'
-    }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Webhook processado com sucesso' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_e = typeof client_dto_1.ClientWebhookDto !== "undefined" && client_dto_1.ClientWebhookDto) === "function" ? _e : Object]),
-    __metadata("design:returntype", Promise)
-], ClientsController.prototype, "webhookOmie", null);
 __decorate([
     (0, common_1.Get)('buscar/:cnpj'),
     (0, swagger_1.ApiOperation)({
@@ -342,27 +294,16 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ClientsController.prototype, "listarClientesInanbetec", null);
 __decorate([
-    (0, common_1.Post)('sincronizacao-manual'),
+    (0, common_1.Get)('status-sistema'),
     (0, swagger_1.ApiOperation)({
-        summary: 'Executar sincronização manual',
-        description: 'Executa uma sincronização manual de todos os clientes modificados recentemente'
+        summary: 'Status do sistema de clientes',
+        description: 'Retorna informações sobre o estado atual do sistema de clientes'
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Sincronização executada com sucesso' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Status do sistema' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], ClientsController.prototype, "sincronizacaoManual", null);
-__decorate([
-    (0, common_1.Get)('status-sincronizacao'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Status da sincronização de clientes',
-        description: 'Retorna informações sobre o status da sincronização automática'
-    }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Status da sincronização' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], ClientsController.prototype, "statusSincronizacao", null);
+], ClientsController.prototype, "statusSistema", null);
 exports.ClientsController = ClientsController = ClientsController_1 = __decorate([
     (0, swagger_1.ApiTags)('clientes'),
     (0, common_1.Controller)('clientes'),
@@ -418,136 +359,6 @@ exports.ClientsModule = ClientsModule = __decorate([
         ],
     })
 ], ClientsModule);
-
-
-/***/ }),
-
-/***/ "./src/clients/dto/client.dto.ts":
-/*!***************************************!*\
-  !*** ./src/clients/dto/client.dto.ts ***!
-  \***************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ClientWebhookDto = exports.SyncClientDto = exports.CreateClientDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
-class CreateClientDto {
-}
-exports.CreateClientDto = CreateClientDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'CNPJ/CPF do cliente',
-        example: '12.345.678/0001-90'
-    }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Length)(11, 18),
-    __metadata("design:type", String)
-], CreateClientDto.prototype, "documento", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Nome/Razão social do cliente',
-        example: 'Empresa Exemplo Ltda'
-    }),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateClientDto.prototype, "nome", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Nome fantasia',
-        example: 'Empresa Exemplo'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateClientDto.prototype, "nomeFantasia", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Email do cliente',
-        example: 'contato@empresa.com'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEmail)(),
-    __metadata("design:type", String)
-], CreateClientDto.prototype, "email", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Telefone do cliente',
-        example: '(11) 99999-9999'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateClientDto.prototype, "telefone", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Endereço completo'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Object)
-], CreateClientDto.prototype, "endereco", void 0);
-class SyncClientDto {
-}
-exports.SyncClientDto = SyncClientDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'CNPJ/CPF do cliente para sincronização',
-        example: '12.345.678/0001-90'
-    }),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SyncClientDto.prototype, "documento", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Plataforma de origem (inanbetec ou omie)',
-        example: 'inanbetec'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SyncClientDto.prototype, "origem", void 0);
-class ClientWebhookDto {
-}
-exports.ClientWebhookDto = ClientWebhookDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Tipo de evento (created, updated, deleted)',
-        example: 'created'
-    }),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], ClientWebhookDto.prototype, "evento", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Dados do cliente'
-    }),
-    __metadata("design:type", Object)
-], ClientWebhookDto.prototype, "cliente", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Plataforma de origem',
-        example: 'inanbetec'
-    }),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], ClientWebhookDto.prototype, "origem", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Timestamp do evento'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], ClientWebhookDto.prototype, "timestamp", void 0);
 
 
 /***/ }),
@@ -700,7 +511,6 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ClientSyncService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const schedule_1 = __webpack_require__(/*! @nestjs/schedule */ "@nestjs/schedule");
 const inanbetec_mongo_service_1 = __webpack_require__(/*! ./inanbetec-mongo.service */ "./src/clients/services/inanbetec-mongo.service.ts");
 const omie_service_1 = __webpack_require__(/*! ../../contracts/services/omie.service */ "./src/contracts/services/omie.service.ts");
 let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
@@ -762,7 +572,7 @@ let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
                     };
                 }
                 else {
-                    await this.inanbetecService.atualizarCliente(dadosInanbetec.id, dadosOmie);
+                    await this.inanbetecService.atualizarCliente(String(dadosInanbetec.id), dadosOmie);
                     resultado.acoes.push('atualizado_na_inanbetec');
                     resultado.detalhes = {
                         origem: 'omie',
@@ -813,45 +623,6 @@ let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
             throw error;
         }
     }
-    async sincronizacaoAutomatica() {
-        try {
-            this.logger.log('Iniciando sincronização automática de clientes');
-            const dataLimite = new Date();
-            dataLimite.setHours(dataLimite.getHours() - 1);
-            const clientesInanbetec = await this.inanbetecService.listarClientes({
-                modificado_apos: dataLimite.toISOString()
-            });
-            const clientesOmie = await this.omieService.listarClientes({
-                pagina: 1,
-                registros_por_pagina: 100,
-                apenas_importado_api: 'N'
-            });
-            const resultados = [];
-            for (const cliente of clientesInanbetec || []) {
-                try {
-                    const resultado = await this.sincronizarClientePorCNPJ(cliente.cnpj_cpf, 'inanbetec');
-                    resultados.push(resultado);
-                }
-                catch (error) {
-                    this.logger.error(`Erro ao sincronizar cliente Inanbetec ${cliente.cnpj_cpf}: ${error.message}`);
-                }
-            }
-            for (const cliente of clientesOmie?.clientes_cadastro || []) {
-                try {
-                    const resultado = await this.sincronizarClientePorCNPJ(cliente.cnpj_cpf, 'omie');
-                    resultados.push(resultado);
-                }
-                catch (error) {
-                    this.logger.error(`Erro ao sincronizar cliente Omie ${cliente.cnpj_cpf}: ${error.message}`);
-                }
-            }
-            this.logger.log(`Sincronização automática concluída: ${resultados.length} clientes processados`);
-            return resultados;
-        }
-        catch (error) {
-            this.logger.error(`Erro na sincronização automática: ${error.message}`);
-        }
-    }
     async buscarClienteOmiePorCNPJ(cnpj) {
         try {
             const clientes = await this.omieService.listarClientes({
@@ -886,12 +657,6 @@ let ClientSyncService = ClientSyncService_1 = class ClientSyncService {
     }
 };
 exports.ClientSyncService = ClientSyncService;
-__decorate([
-    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_HOUR),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], ClientSyncService.prototype, "sincronizacaoAutomatica", null);
 exports.ClientSyncService = ClientSyncService = ClientSyncService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeof (_a = typeof inanbetec_mongo_service_1.InanbetecService !== "undefined" && inanbetec_mongo_service_1.InanbetecService) === "function" ? _a : Object, typeof (_b = typeof omie_service_1.OmieService !== "undefined" && omie_service_1.OmieService) === "function" ? _b : Object])
@@ -1140,7 +905,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var ContractsController_1;
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContractsController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1152,13 +917,14 @@ let ContractsController = ContractsController_1 = class ContractsController {
         this.contractsService = contractsService;
         this.logger = new common_1.Logger(ContractsController_1.name);
     }
+    async testarCriacaoContrato(empresaId, competencia, enviarOmie) {
+        this.logger.log(`🧪 Teste de criação de contrato - Empresa: ${empresaId}, Competência: ${competencia}`);
+        const enviarParaOmie = enviarOmie === 'true';
+        return this.contractsService.testarCriacaoContrato(empresaId, competencia, enviarParaOmie);
+    }
     async createContractFromVolumetria(dto) {
         this.logger.log(`Criando contrato a partir da volumetria para empresa: ${dto.empresaId}`);
         return this.contractsService.createContractFromVolumetria(dto.empresaId, dto.dataInicial, dto.dataFinal, dto.dadosEmpresa);
-    }
-    async createContractsFromReports(dto) {
-        this.logger.log(`Criando contratos a partir de relatórios para empresa: ${dto.empresaId}`);
-        return this.contractsService.createContractsFromReports(dto.empresaId, dto.dataInicial, dto.dataFinal, dto.dadosEmpresa);
     }
     async listContracts(query) {
         this.logger.log(`Listando contratos - Página: ${query.pagina}`);
@@ -1167,10 +933,6 @@ let ContractsController = ContractsController_1 = class ContractsController {
     async getVolumetriaData(empresaId, dataInicial, dataFinal) {
         this.logger.log(`Consultando volumetria para empresa: ${empresaId}`);
         return this.contractsService.getVolumetriaData(empresaId, dataInicial, dataFinal);
-    }
-    async getReportsData(empresaId, dataInicial, dataFinal) {
-        this.logger.log(`Consultando relatórios para empresa: ${empresaId}`);
-        return this.contractsService.getReportsData(empresaId, dataInicial, dataFinal);
     }
     async getContract(id) {
         this.logger.log(`Buscando contrato: ${id}`);
@@ -1190,8 +952,35 @@ let ContractsController = ContractsController_1 = class ContractsController {
         this.logger.log(`Excluindo item ${itemId} do contrato ${contractId}`);
         return this.contractsService.deleteContractItem({ nCodCtr: contractId }, [{ codItem: itemId }]);
     }
+    async processarConsolidacaoMensal(dto) {
+        this.logger.log(`=== PROCESSAMENTO CONSOLIDAÇÃO MENSAL ===`);
+        this.logger.log(`Competência: ${dto.competencia}`);
+        this.logger.log(`Empresas: ${dto.empresaIds ? dto.empresaIds.join(',') : 'TODAS'}`);
+        return this.contractsService.processarConsolidacaoMensal(dto.competencia, dto.empresaIds);
+    }
+    async processarConsolidacaoManual(empresaId, dto) {
+        this.logger.log(`Consolidação manual - Empresa: ${empresaId}, Competência: ${dto.competencia}`);
+        return this.contractsService.processarConsolidacaoMensal(dto.competencia, [empresaId]);
+    }
 };
 exports.ContractsController = ContractsController;
+__decorate([
+    (0, common_1.Post)('teste/:empresaId/:competencia'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'TESTE: Criar contrato sem salvar no banco',
+        description: 'Testa a criação de contrato agrupando volumetria por produto e separando por proposta, SEM PERSISTIR dados'
+    }),
+    (0, swagger_1.ApiParam)({ name: 'empresaId', description: 'ID da empresa' }),
+    (0, swagger_1.ApiParam)({ name: 'competencia', description: 'Competência no formato YYYY-MM (ex: 2025-08)' }),
+    (0, swagger_1.ApiQuery)({ name: 'enviarOmie', required: false, description: 'Se true, envia para Omie; se false, apenas simula' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Teste executado com sucesso' }),
+    __param(0, (0, common_1.Param)('empresaId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('competencia')),
+    __param(2, (0, common_1.Query)('enviarOmie')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String, String]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "testarCriacaoContrato", null);
 __decorate([
     (0, common_1.Post)('volumetria'),
     (0, swagger_1.ApiOperation)({
@@ -1206,19 +995,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "createContractFromVolumetria", null);
 __decorate([
-    (0, common_1.Post)('relatorios'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Criar contratos baseados em relatórios por produto',
-        description: 'Cria múltiplos contratos no Omie baseados nos relatórios agrupados por produto (cobrança, pixpay, outros)'
-    }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Contratos criados com sucesso' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Erro na criação dos contratos' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof contract_dto_1.CreateContractFromReportsDto !== "undefined" && contract_dto_1.CreateContractFromReportsDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "createContractsFromReports", null);
-__decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({
         summary: 'Listar contratos',
@@ -1230,7 +1006,7 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de contratos retornada com sucesso' }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof contract_dto_1.ListContractsDto !== "undefined" && contract_dto_1.ListContractsDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof contract_dto_1.ListContractsDto !== "undefined" && contract_dto_1.ListContractsDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "listContracts", null);
 __decorate([
@@ -1250,23 +1026,6 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "getVolumetriaData", null);
-__decorate([
-    (0, common_1.Get)('relatorios/:empresaId'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Consultar dados de relatórios agrupados',
-        description: 'Consulta relatórios agrupados por produto para análise sem criar contratos'
-    }),
-    (0, swagger_1.ApiParam)({ name: 'empresaId', description: 'ID da empresa' }),
-    (0, swagger_1.ApiQuery)({ name: 'dataInicial', required: true, description: 'Data inicial' }),
-    (0, swagger_1.ApiQuery)({ name: 'dataFinal', required: true, description: 'Data final' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Dados de relatórios retornados com sucesso' }),
-    __param(0, (0, common_1.Param)('empresaId')),
-    __param(1, (0, common_1.Query)('dataInicial')),
-    __param(2, (0, common_1.Query)('dataFinal')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "getReportsData", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({
@@ -1312,6 +1071,32 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "deleteContractItem", null);
+__decorate([
+    (0, common_1.Post)('consolidacao/processar'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Processar consolidação mensal por proposta comercial',
+        description: 'Executa o processo de consolidação mensal agrupando por número de proposta comercial (FLUXO CORRETO)'
+    }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Consolidação processada com sucesso' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Erro no processamento da consolidação' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "processarConsolidacaoMensal", null);
+__decorate([
+    (0, common_1.Post)('consolidacao/manual/:empresaId'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Processar consolidação manual para uma empresa',
+        description: 'Executa consolidação para uma empresa específica (modo manual)'
+    }),
+    (0, swagger_1.ApiParam)({ name: 'empresaId', description: 'ID da empresa' }),
+    __param(0, (0, common_1.Param)('empresaId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "processarConsolidacaoManual", null);
 exports.ContractsController = ContractsController = ContractsController_1 = __decorate([
     (0, swagger_1.ApiTags)('contratos'),
     (0, common_1.Controller)('contratos'),
@@ -1338,26 +1123,45 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContractsModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const schedule_1 = __webpack_require__(/*! @nestjs/schedule */ "@nestjs/schedule");
 const contracts_controller_1 = __webpack_require__(/*! ./contracts.controller */ "./src/contracts/contracts.controller.ts");
 const contracts_service_1 = __webpack_require__(/*! ./services/contracts.service */ "./src/contracts/services/contracts.service.ts");
 const volumetria_service_1 = __webpack_require__(/*! ./services/volumetria.service */ "./src/contracts/services/volumetria.service.ts");
 const omie_service_1 = __webpack_require__(/*! ./services/omie.service */ "./src/contracts/services/omie.service.ts");
+const propostas_service_1 = __webpack_require__(/*! ./services/propostas.service */ "./src/contracts/services/propostas.service.ts");
+const consolidacao_service_1 = __webpack_require__(/*! ./services/consolidacao.service */ "./src/contracts/services/consolidacao.service.ts");
+const configuracao_service_1 = __webpack_require__(/*! ./services/configuracao.service */ "./src/contracts/services/configuracao.service.ts");
+const consolidacao_scheduler_service_1 = __webpack_require__(/*! ./services/consolidacao-scheduler.service */ "./src/contracts/services/consolidacao-scheduler.service.ts");
+const volumetria_consolidada_schema_1 = __webpack_require__(/*! ./schemas/volumetria-consolidada.schema */ "./src/contracts/schemas/volumetria-consolidada.schema.ts");
 let ContractsModule = class ContractsModule {
 };
 exports.ContractsModule = ContractsModule;
 exports.ContractsModule = ContractsModule = __decorate([
     (0, common_1.Module)({
-        imports: [axios_1.HttpModule],
+        imports: [
+            axios_1.HttpModule,
+            schedule_1.ScheduleModule.forRoot(),
+            mongoose_1.MongooseModule.forFeature([{ name: volumetria_consolidada_schema_1.VolumetriaConsolidada.name, schema: volumetria_consolidada_schema_1.VolumetriaConsolidadaSchema }])
+        ],
         controllers: [contracts_controller_1.ContractsController],
         providers: [
             contracts_service_1.ContractsService,
             volumetria_service_1.VolumetriaService,
             omie_service_1.OmieService,
+            propostas_service_1.PropostasService,
+            consolidacao_service_1.ConsolidacaoService,
+            configuracao_service_1.ConfiguracaoService,
+            consolidacao_scheduler_service_1.ConsolidacaoSchedulerService,
         ],
         exports: [
             contracts_service_1.ContractsService,
             volumetria_service_1.VolumetriaService,
             omie_service_1.OmieService,
+            propostas_service_1.PropostasService,
+            consolidacao_service_1.ConsolidacaoService,
+            configuracao_service_1.ConfiguracaoService,
+            consolidacao_scheduler_service_1.ConsolidacaoSchedulerService,
         ],
     })
 ], ContractsModule);
@@ -1382,7 +1186,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ListContractsDto = exports.CreateContractFromReportsDto = exports.CreateContractFromVolumetriaDto = void 0;
+exports.ListContractsDto = exports.CreateContractFromVolumetriaDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 class CreateContractFromVolumetriaDto {
@@ -1419,40 +1223,6 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
 ], CreateContractFromVolumetriaDto.prototype, "dadosEmpresa", void 0);
-class CreateContractFromReportsDto {
-}
-exports.CreateContractFromReportsDto = CreateContractFromReportsDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'ID da empresa',
-        example: '123456'
-    }),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateContractFromReportsDto.prototype, "empresaId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Data inicial para consulta',
-        example: '2025-01-01'
-    }),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateContractFromReportsDto.prototype, "dataInicial", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Data final para consulta',
-        example: '2025-12-31'
-    }),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateContractFromReportsDto.prototype, "dataFinal", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Dados adicionais da empresa'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Object)
-], CreateContractFromReportsDto.prototype, "dadosEmpresa", void 0);
 class ListContractsDto {
     constructor() {
         this.pagina = 1;
@@ -1492,6 +1262,861 @@ __decorate([
 
 /***/ }),
 
+/***/ "./src/contracts/schemas/volumetria-consolidada.schema.ts":
+/*!****************************************************************!*\
+  !*** ./src/contracts/schemas/volumetria-consolidada.schema.ts ***!
+  \****************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VolumetriaConsolidadaSchema = exports.VolumetriaConsolidada = void 0;
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+let VolumetriaConsolidada = class VolumetriaConsolidada {
+};
+exports.VolumetriaConsolidada = VolumetriaConsolidada;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], VolumetriaConsolidada.prototype, "competencia", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", Number)
+], VolumetriaConsolidada.prototype, "empresaId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], VolumetriaConsolidada.prototype, "numeroProposta", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], VolumetriaConsolidada.prototype, "proposta", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", Number)
+], VolumetriaConsolidada.prototype, "valorTotal", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], VolumetriaConsolidada.prototype, "quantidadeTotal", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], VolumetriaConsolidada.prototype, "totalProdutos", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Array, default: [] }),
+    __metadata("design:type", typeof (_b = typeof Array !== "undefined" && Array) === "function" ? _b : Object)
+], VolumetriaConsolidada.prototype, "produtos", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Object, default: {} }),
+    __metadata("design:type", Object)
+], VolumetriaConsolidada.prototype, "payload", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], VolumetriaConsolidada.prototype, "codigoIntegracao", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 'ready_to_send', enum: ['ready_to_send', 'sending', 'sent', 'error'] }),
+    __metadata("design:type", String)
+], VolumetriaConsolidada.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], VolumetriaConsolidada.prototype, "tentativas", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], VolumetriaConsolidada.prototype, "mensagemErro", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Object }),
+    __metadata("design:type", Object)
+], VolumetriaConsolidada.prototype, "omieRequest", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Object }),
+    __metadata("design:type", Object)
+], VolumetriaConsolidada.prototype, "omieResponse", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Number)
+], VolumetriaConsolidada.prototype, "contratoOmieId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: Date.now }),
+    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
+], VolumetriaConsolidada.prototype, "createdAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: Date.now }),
+    __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
+], VolumetriaConsolidada.prototype, "updatedAt", void 0);
+exports.VolumetriaConsolidada = VolumetriaConsolidada = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], VolumetriaConsolidada);
+exports.VolumetriaConsolidadaSchema = mongoose_1.SchemaFactory.createForClass(VolumetriaConsolidada);
+exports.VolumetriaConsolidadaSchema.index({ competencia: 1, empresaId: 1, numeroProposta: 1 }, { unique: true });
+
+
+/***/ }),
+
+/***/ "./src/contracts/services/configuracao.service.ts":
+/*!********************************************************!*\
+  !*** ./src/contracts/services/configuracao.service.ts ***!
+  \********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var ConfiguracaoService_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConfiguracaoService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
+    constructor(configService) {
+        this.configService = configService;
+        this.logger = new common_1.Logger(ConfiguracaoService_1.name);
+    }
+    async obterEmpresasAtivas() {
+        try {
+            const empresasConfig = this.configService.get('EMPRESAS_ATIVAS', '51,66');
+            const empresas = empresasConfig.split(',').map(id => parseInt(id.trim()));
+            this.logger.log(`Empresas ativas configuradas: ${empresas.join(', ')}`);
+            return empresas;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter empresas ativas: ${error.message}`);
+            return [51, 66];
+        }
+    }
+    async obterCodigoClienteOmie(empresaId) {
+        try {
+            const mapeamento = {
+                51: 2370765,
+                66: 1234567,
+                258: 1234568
+            };
+            const codigoCliente = mapeamento[empresaId];
+            if (!codigoCliente) {
+                throw new Error(`Código cliente Omie não configurado para empresa ${empresaId}`);
+            }
+            return codigoCliente;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter código cliente Omie: ${error.message}`);
+            throw error;
+        }
+    }
+    async obterConfiguracaoEmpresa(empresaId) {
+        try {
+            const configuracoesPadrao = {
+                51: {
+                    empresaId: 51,
+                    nomeEmpresa: 'Empresa 51 - InAnbetec',
+                    codigoClienteOmie: 2370765,
+                    ativo: true,
+                    configuracao: {
+                        tipoFaturamento: '01',
+                        diaFaturamento: 30,
+                        vigenciaInicial: '01/01/2025',
+                        vigenciaFinal: '31/12/2025',
+                        codigosServico: {
+                            'cobranca': {
+                                codServico: 1001,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'pagamentos': {
+                                codServico: 1002,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'bolepix': {
+                                codServico: 1003,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'pixpay': {
+                                codServico: 1004,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            }
+                        }
+                    }
+                },
+                66: {
+                    empresaId: 66,
+                    nomeEmpresa: 'Empresa 66 - InAnbetec',
+                    codigoClienteOmie: 1234567,
+                    ativo: true,
+                    configuracao: {
+                        tipoFaturamento: '01',
+                        diaFaturamento: 30,
+                        vigenciaInicial: '01/01/2025',
+                        vigenciaFinal: '31/12/2025',
+                        codigosServico: {
+                            'cobranca': {
+                                codServico: 1001,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'webcheckout': {
+                                codServico: 1005,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 0
+                            }
+                        }
+                    }
+                },
+                258: {
+                    empresaId: 258,
+                    nomeEmpresa: 'Empresa 258 - InAnbetec',
+                    codigoClienteOmie: 1234568,
+                    ativo: true,
+                    configuracao: {
+                        tipoFaturamento: '01',
+                        diaFaturamento: 30,
+                        vigenciaInicial: '01/01/2025',
+                        vigenciaFinal: '31/12/2025',
+                        codigosServico: {
+                            'cobranca': {
+                                codServico: 1001,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'bolepix': {
+                                codServico: 1003,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'pagamentos': {
+                                codServico: 1002,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            },
+                            'pixpay': {
+                                codServico: 1004,
+                                codLC116: '3.05',
+                                natOperacao: '01',
+                                aliqISS: 5.0
+                            }
+                        }
+                    }
+                }
+            };
+            const config = configuracoesPadrao[empresaId];
+            if (!config) {
+                throw new Error(`Configuração não encontrada para empresa ${empresaId}`);
+            }
+            return config;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter configuração da empresa ${empresaId}: ${error.message}`);
+            throw error;
+        }
+    }
+    async obterCodigosServico(empresaId, nomeProduto) {
+        try {
+            const config = await this.obterConfiguracaoEmpresa(empresaId);
+            const codigoProduto = config.configuracao.codigosServico[nomeProduto.toLowerCase()];
+            if (!codigoProduto) {
+                return {
+                    codServico: 1000,
+                    codLC116: '3.05',
+                    natOperacao: '01',
+                    aliqISS: 5.0
+                };
+            }
+            return codigoProduto;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter códigos de serviço: ${error.message}`);
+            throw error;
+        }
+    }
+    async validarEmpresa(empresaId) {
+        try {
+            const empresasAtivas = await this.obterEmpresasAtivas();
+            if (!empresasAtivas.includes(empresaId)) {
+                return false;
+            }
+            const config = await this.obterConfiguracaoEmpresa(empresaId);
+            return config.ativo;
+        }
+        catch (error) {
+            this.logger.warn(`Empresa ${empresaId} não está válida: ${error.message}`);
+            return false;
+        }
+    }
+    isPrimeiroDiaUtil() {
+        const hoje = new Date();
+        const diaSemana = hoje.getDay();
+        if (diaSemana === 0 || diaSemana === 6) {
+            return false;
+        }
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        while (primeiroDia.getDay() === 0 || primeiroDia.getDay() === 6) {
+            primeiroDia.setDate(primeiroDia.getDate() + 1);
+        }
+        return hoje.getDate() === primeiroDia.getDate();
+    }
+    obterCompetenciaAnterior() {
+        const hoje = new Date();
+        const mesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        const ano = mesAnterior.getFullYear();
+        const mes = String(mesAnterior.getMonth() + 1).padStart(2, '0');
+        return `${ano}-${mes}`;
+    }
+    obterConfiguracaoGeral() {
+        return {
+            inanbetecVolumetriaURL: this.configService.get('INANBETEC_VOLUMETRIA_URL'),
+            omieApiURL: this.configService.get('OMIE_API_URL'),
+            omieAppKey: this.configService.get('OMIE_APP_KEY'),
+            omieAppSecret: this.configService.get('OMIE_APP_SECRET'),
+            maxTentativas: this.configService.get('MAX_TENTATIVAS', 3),
+            timeoutAPI: this.configService.get('TIMEOUT_API', 30000),
+            horarioConsolidacao: this.configService.get('HORARIO_CONSOLIDACAO', '06:00'),
+            horarioRetentativa1: this.configService.get('HORARIO_RETENTATIVA_1', '10:00'),
+            horarioRetentativa2: this.configService.get('HORARIO_RETENTATIVA_2', '14:00'),
+            mesesRetencao: this.configService.get('MESES_RETENCAO', 12)
+        };
+    }
+};
+exports.ConfiguracaoService = ConfiguracaoService;
+exports.ConfiguracaoService = ConfiguracaoService = ConfiguracaoService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+], ConfiguracaoService);
+
+
+/***/ }),
+
+/***/ "./src/contracts/services/consolidacao-scheduler.service.ts":
+/*!******************************************************************!*\
+  !*** ./src/contracts/services/consolidacao-scheduler.service.ts ***!
+  \******************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var ConsolidacaoSchedulerService_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConsolidacaoSchedulerService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const schedule_1 = __webpack_require__(/*! @nestjs/schedule */ "@nestjs/schedule");
+const contracts_service_1 = __webpack_require__(/*! ./contracts.service */ "./src/contracts/services/contracts.service.ts");
+const configuracao_service_1 = __webpack_require__(/*! ./configuracao.service */ "./src/contracts/services/configuracao.service.ts");
+let ConsolidacaoSchedulerService = ConsolidacaoSchedulerService_1 = class ConsolidacaoSchedulerService {
+    constructor(contractsService, configuracaoService) {
+        this.contractsService = contractsService;
+        this.configuracaoService = configuracaoService;
+        this.logger = new common_1.Logger(ConsolidacaoSchedulerService_1.name);
+        this.processandoConsolidacao = false;
+    }
+    async executarConsolidacaoPrincipal() {
+        try {
+            this.logger.log('Verificando se deve executar consolidação mensal...');
+            if (this.processandoConsolidacao) {
+                this.logger.warn('Consolidação já está em andamento - ignorando execução');
+                return;
+            }
+            if (!this.configuracaoService.isPrimeiroDiaUtil()) {
+                this.logger.log('Hoje não é o primeiro dia útil do mês - aguardando');
+                return;
+            }
+            await this.executarConsolidacao('Principal às 6h');
+        }
+        catch (error) {
+            this.logger.error(`Erro na consolidação principal: ${error.message}`);
+        }
+    }
+    async executarPrimeiraRetentativa() {
+        try {
+            this.logger.log('Executando primeira retentativa...');
+            if (this.processandoConsolidacao) {
+                this.logger.warn('Consolidação em andamento - ignorando retentativa');
+                return;
+            }
+            if (!this.configuracaoService.isPrimeiroDiaUtil()) {
+                return;
+            }
+            await this.executarConsolidacao('Retentativa 1 às 10h');
+        }
+        catch (error) {
+            this.logger.error(`Erro na primeira retentativa: ${error.message}`);
+        }
+    }
+    async executarSegundaRetentativa() {
+        try {
+            this.logger.log('Executando segunda retentativa...');
+            if (this.processandoConsolidacao) {
+                this.logger.warn('Consolidação em andamento - ignorando retentativa');
+                return;
+            }
+            if (!this.configuracaoService.isPrimeiroDiaUtil()) {
+                return;
+            }
+            await this.executarConsolidacao('Retentativa 2 às 14h');
+        }
+        catch (error) {
+            this.logger.error(`Erro na segunda retentativa: ${error.message}`);
+        }
+    }
+    async executarLimpezaMensal() {
+        try {
+            this.logger.log('Executando limpeza mensal de registros antigos...');
+        }
+        catch (error) {
+            this.logger.error(`Erro na limpeza mensal: ${error.message}`);
+        }
+    }
+    async executarConsolidacao(contexto) {
+        this.processandoConsolidacao = true;
+        const inicioProcessamento = new Date();
+        try {
+            this.logger.log(`=== INICIANDO CONSOLIDAÇÃO MENSAL - ${contexto} ===`);
+            const competencia = this.configuracaoService.obterCompetenciaAnterior();
+            this.logger.log(`Processando competência: ${competencia}`);
+            const empresasAtivas = await this.configuracaoService.obterEmpresasAtivas();
+            this.logger.log(`Empresas a processar: ${empresasAtivas.join(', ')}`);
+            const resultado = await this.contractsService.processarConsolidacaoMensal(competencia, empresasAtivas.map(id => id.toString()));
+            const tempoProcessamento = Date.now() - inicioProcessamento.getTime();
+            const tempoFormatado = this.formatarTempo(tempoProcessamento);
+            if (resultado.success) {
+                this.logger.log(`=== CONSOLIDAÇÃO CONCLUÍDA COM SUCESSO - ${contexto} ===`);
+                this.logger.log(`Competência: ${resultado.competencia}`);
+                this.logger.log(`Empresas processadas: ${resultado.empresasProcessadas}`);
+                this.logger.log(`Empresas com sucesso: ${resultado.empresasComSucesso}`);
+                this.logger.log(`Tempo de processamento: ${tempoFormatado}`);
+                resultado.resultados.forEach(empresaResult => {
+                    if (empresaResult.success) {
+                        this.logger.log(`✅ Empresa ${empresaResult.empresaId}: ${empresaResult.propostas?.length || 0} propostas processadas`);
+                    }
+                    else {
+                        this.logger.error(`❌ Empresa ${empresaResult.empresaId}: ${empresaResult.error}`);
+                    }
+                });
+            }
+            else {
+                this.logger.error(`=== CONSOLIDAÇÃO FALHOU - ${contexto} ===`);
+                this.logger.error(`Erro: ${resultado.error}`);
+            }
+            await this.enviarNotificacaoStatus(resultado, contexto, tempoFormatado);
+        }
+        catch (error) {
+            const tempoProcessamento = Date.now() - inicioProcessamento.getTime();
+            const tempoFormatado = this.formatarTempo(tempoProcessamento);
+            this.logger.error(`=== ERRO CRÍTICO NA CONSOLIDAÇÃO - ${contexto} ===`);
+            this.logger.error(`Erro: ${error.message}`);
+            this.logger.error(`Tempo até erro: ${tempoFormatado}`);
+            await this.enviarAlertaCritico(error, contexto);
+        }
+        finally {
+            this.processandoConsolidacao = false;
+        }
+    }
+    async executarConsolidacaoManual(competencia, empresaIds) {
+        if (this.processandoConsolidacao) {
+            throw new Error('Consolidação automática em andamento. Aguarde a conclusão.');
+        }
+        try {
+            this.processandoConsolidacao = true;
+            const competenciaProcessar = competencia || this.configuracaoService.obterCompetenciaAnterior();
+            const empresasProcessar = empresaIds || (await this.configuracaoService.obterEmpresasAtivas()).map(id => id.toString());
+            this.logger.log(`Executando consolidação MANUAL - Competência: ${competenciaProcessar}`);
+            const resultado = await this.contractsService.processarConsolidacaoMensal(competenciaProcessar, empresasProcessar);
+            this.logger.log(`Consolidação manual concluída: ${resultado.success ? 'SUCESSO' : 'ERRO'}`);
+            return resultado;
+        }
+        finally {
+            this.processandoConsolidacao = false;
+        }
+    }
+    obterStatusProcessamento() {
+        return {
+            processando: this.processandoConsolidacao,
+            detalhes: this.processandoConsolidacao ? {
+                iniciado: new Date(),
+                proximaExecucao: this.obterProximaExecucao()
+            } : null
+        };
+    }
+    formatarTempo(milissegundos) {
+        const segundos = Math.floor(milissegundos / 1000);
+        const minutos = Math.floor(segundos / 60);
+        const horas = Math.floor(minutos / 60);
+        if (horas > 0) {
+            return `${horas}h ${minutos % 60}m ${segundos % 60}s`;
+        }
+        else if (minutos > 0) {
+            return `${minutos}m ${segundos % 60}s`;
+        }
+        else {
+            return `${segundos}s`;
+        }
+    }
+    obterProximaExecucao() {
+        const agora = new Date();
+        const proximoDiaUtil = new Date(agora);
+        do {
+            proximoDiaUtil.setDate(proximoDiaUtil.getDate() + 1);
+        } while (proximoDiaUtil.getDay() === 0 || proximoDiaUtil.getDay() === 6);
+        proximoDiaUtil.setHours(6, 0, 0, 0);
+        return proximoDiaUtil.toISOString();
+    }
+    async enviarNotificacaoStatus(resultado, contexto, tempo) {
+        this.logger.log(`Notificação de status enviada - ${contexto} - Sucesso: ${resultado.success}`);
+    }
+    async enviarAlertaCritico(error, contexto) {
+        this.logger.error(`Alerta crítico enviado - ${contexto} - Erro: ${error.message}`);
+    }
+};
+exports.ConsolidacaoSchedulerService = ConsolidacaoSchedulerService;
+__decorate([
+    (0, schedule_1.Cron)('0 6 * * 1-5', {
+        name: 'consolidacao-mensal-principal',
+        timeZone: 'America/Sao_Paulo'
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ConsolidacaoSchedulerService.prototype, "executarConsolidacaoPrincipal", null);
+__decorate([
+    (0, schedule_1.Cron)('0 10 * * 1-5', {
+        name: 'consolidacao-retentativa-1',
+        timeZone: 'America/Sao_Paulo'
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ConsolidacaoSchedulerService.prototype, "executarPrimeiraRetentativa", null);
+__decorate([
+    (0, schedule_1.Cron)('0 14 * * 1-5', {
+        name: 'consolidacao-retentativa-2',
+        timeZone: 'America/Sao_Paulo'
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ConsolidacaoSchedulerService.prototype, "executarSegundaRetentativa", null);
+__decorate([
+    (0, schedule_1.Cron)('0 2 15 * *', {
+        name: 'limpeza-registros-antigos',
+        timeZone: 'America/Sao_Paulo'
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ConsolidacaoSchedulerService.prototype, "executarLimpezaMensal", null);
+exports.ConsolidacaoSchedulerService = ConsolidacaoSchedulerService = ConsolidacaoSchedulerService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof contracts_service_1.ContractsService !== "undefined" && contracts_service_1.ContractsService) === "function" ? _a : Object, typeof (_b = typeof configuracao_service_1.ConfiguracaoService !== "undefined" && configuracao_service_1.ConfiguracaoService) === "function" ? _b : Object])
+], ConsolidacaoSchedulerService);
+
+
+/***/ }),
+
+/***/ "./src/contracts/services/consolidacao.service.ts":
+/*!********************************************************!*\
+  !*** ./src/contracts/services/consolidacao.service.ts ***!
+  \********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var ConsolidacaoService_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConsolidacaoService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const volumetria_consolidada_schema_1 = __webpack_require__(/*! ../schemas/volumetria-consolidada.schema */ "./src/contracts/schemas/volumetria-consolidada.schema.ts");
+let ConsolidacaoService = ConsolidacaoService_1 = class ConsolidacaoService {
+    constructor(consolidacaoModel) {
+        this.consolidacaoModel = consolidacaoModel;
+        this.logger = new common_1.Logger(ConsolidacaoService_1.name);
+    }
+    async persistirConsolidacao(dados) {
+        try {
+            const quantidadeTotal = dados.produtos.reduce((total, produto) => total + (produto.quantidade || 1), 0);
+            const totalProdutos = dados.produtos.length;
+            const codigoIntegracao = this.gerarCodigoIntegracao(dados.competencia, dados.empresaId, dados.numeroProposta);
+            const consolidacao = new this.consolidacaoModel({
+                competencia: this.converterCompetenciaParaDate(dados.competencia),
+                empresaId: dados.empresaId,
+                numeroProposta: dados.numeroProposta,
+                proposta: dados.numeroProposta,
+                valorTotal: dados.valorTotal,
+                quantidadeTotal,
+                totalProdutos,
+                produtos: dados.produtos,
+                payload: dados.payload || {},
+                codigoIntegracao,
+                status: 'ready_to_send',
+                tentativas: 0,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            const resultado = await consolidacao.save();
+            this.logger.log(`Consolidação persistida - ID: ${resultado._id}`);
+            return resultado;
+        }
+        catch (error) {
+            if (error.code === 11000) {
+                this.logger.warn(`Consolidação duplicada detectada - reprocessando: ${dados.competencia}/${dados.empresaId}/${dados.numeroProposta}`);
+                return await this.buscarConsolidacao(dados.competencia, dados.empresaId, dados.numeroProposta);
+            }
+            this.logger.error(`Erro ao persistir consolidação: ${error.message}`);
+            throw error;
+        }
+    }
+    async buscarConsolidacao(competencia, empresaId, proposta) {
+        try {
+            const competenciaDate = this.converterCompetenciaParaDate(competencia);
+            return await this.consolidacaoModel.findOne({
+                competencia: competenciaDate,
+                empresaId,
+                proposta
+            }).exec();
+        }
+        catch (error) {
+            this.logger.error(`Erro ao buscar consolidação: ${error.message}`);
+            return null;
+        }
+    }
+    async atualizarStatusConsolidacao(id, novoStatus, mensagemErro, omieRequest, omieResponse) {
+        try {
+            const updates = {
+                status: novoStatus,
+                updatedAt: new Date()
+            };
+            if (mensagemErro) {
+                updates.mensagemErro = mensagemErro;
+            }
+            if (omieRequest) {
+                updates.omieRequest = omieRequest;
+            }
+            if (omieResponse) {
+                updates.omieResponse = omieResponse;
+                if (omieResponse.cCodStatus === '0') {
+                    updates.contratoOmieId = omieResponse.nCodCtr;
+                    updates.mensagemErro = null;
+                }
+            }
+            if (novoStatus === 'error') {
+                updates.$inc = { tentativas: 1 };
+            }
+            const resultado = await this.consolidacaoModel.findByIdAndUpdate(id, updates, { new: true });
+            if (!resultado) {
+                throw new Error(`Consolidação não encontrada: ${id}`);
+            }
+            this.logger.log(`Status atualizado para ${novoStatus} - ID: ${id}`);
+            return resultado;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao atualizar status: ${error.message}`);
+            throw error;
+        }
+    }
+    async listarConsolidacoes(filtros = {}) {
+        try {
+            const query = {};
+            if (filtros.competencia) {
+                query.competencia = this.converterCompetenciaParaDate(filtros.competencia);
+            }
+            if (filtros.empresaId) {
+                query.empresaId = filtros.empresaId;
+            }
+            if (filtros.status) {
+                query.status = filtros.status;
+            }
+            if (filtros.proposta) {
+                query.proposta = filtros.proposta;
+            }
+            return await this.consolidacaoModel
+                .find(query)
+                .sort({ createdAt: -1 })
+                .exec();
+        }
+        catch (error) {
+            this.logger.error(`Erro ao listar consolidações: ${error.message}`);
+            throw error;
+        }
+    }
+    async marcarParaReprocessamento(id) {
+        try {
+            const resultado = await this.consolidacaoModel.findByIdAndUpdate(id, {
+                status: 'ready_to_send',
+                mensagemErro: null,
+                omieRequest: null,
+                omieResponse: null
+            }, { new: true });
+            if (resultado) {
+                this.logger.log(`Consolidação marcada para reprocessamento: ${id}`);
+                return true;
+            }
+            return false;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao marcar para reprocessamento: ${error.message}`);
+            return false;
+        }
+    }
+    async atualizarTotais(id, novosTotais) {
+        try {
+            const resultado = await this.consolidacaoModel.findByIdAndUpdate(id, {
+                valorTotal: novosTotais.valorTotal,
+                quantidadeTotal: novosTotais.quantidadeTotal,
+                totalProdutos: novosTotais.totalProdutos,
+                updatedAt: new Date()
+            }, { new: true });
+            if (!resultado) {
+                throw new Error(`Consolidação não encontrada: ${id}`);
+            }
+            this.logger.log(`Totais atualizados - ID: ${id}`);
+        }
+        catch (error) {
+            this.logger.error(`Erro ao atualizar totais: ${error.message}`);
+            throw error;
+        }
+    }
+    async obterEstatisticas(competencia) {
+        try {
+            const matchStage = {};
+            if (competencia) {
+                matchStage.competencia = this.converterCompetenciaParaDate(competencia);
+            }
+            const stats = await this.consolidacaoModel.aggregate([
+                { $match: matchStage },
+                {
+                    $group: {
+                        _id: '$status',
+                        total: { $sum: 1 },
+                        valorTotal: { $sum: '$valorTotal' },
+                        valorMedio: { $avg: '$valorTotal' }
+                    }
+                }
+            ]);
+            const resultado = {
+                totalRegistros: 0,
+                porStatus: {},
+                valorTotalGeral: 0
+            };
+            for (const stat of stats) {
+                resultado.totalRegistros += stat.total;
+                resultado.valorTotalGeral += stat.valorTotal;
+                resultado.porStatus[stat._id] = {
+                    total: stat.total,
+                    valorTotal: stat.valorTotal,
+                    valorMedio: stat.valorMedio
+                };
+            }
+            return resultado;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter estatísticas: ${error.message}`);
+            throw error;
+        }
+    }
+    async limparConsolidacoes(competencia, apenasErros = false) {
+        try {
+            const filtro = {};
+            if (competencia) {
+                filtro.competencia = this.converterCompetenciaParaDate(competencia);
+            }
+            if (apenasErros) {
+                filtro.status = 'error';
+            }
+            const resultado = await this.consolidacaoModel.deleteMany(filtro);
+            this.logger.log(`Limpeza concluída: ${resultado.deletedCount} registros removidos`);
+            return resultado.deletedCount;
+        }
+        catch (error) {
+            this.logger.error(`Erro na limpeza: ${error.message}`);
+            throw error;
+        }
+    }
+    converterCompetenciaParaDate(competencia) {
+        const [ano, mes] = competencia.split('-');
+        return new Date(`${ano}-${mes}-01T00:00:00.000Z`);
+    }
+    gerarCodigoIntegracao(competencia, empresaId, proposta) {
+        const [ano, mes] = competencia.split('-');
+        return `CTR-${ano}-${mes}-EMP${empresaId}-PROP-${proposta}`;
+    }
+    async limparRegistrosAntigos(mesesAnteriores = 12) {
+        try {
+            const dataLimite = new Date();
+            dataLimite.setMonth(dataLimite.getMonth() - mesesAnteriores);
+            const resultado = await this.consolidacaoModel.deleteMany({
+                competencia: { $lt: dataLimite },
+                status: 'sent'
+            });
+            this.logger.log(`Limpeza concluída: ${resultado.deletedCount} registros removidos`);
+            return resultado.deletedCount;
+        }
+        catch (error) {
+            this.logger.error(`Erro na limpeza de registros: ${error.message}`);
+            return 0;
+        }
+    }
+};
+exports.ConsolidacaoService = ConsolidacaoService;
+exports.ConsolidacaoService = ConsolidacaoService = ConsolidacaoService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, mongoose_1.InjectModel)(volumetria_consolidada_schema_1.VolumetriaConsolidada.name)),
+    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object])
+], ConsolidacaoService);
+
+
+/***/ }),
+
 /***/ "./src/contracts/services/contracts.service.ts":
 /*!*****************************************************!*\
   !*** ./src/contracts/services/contracts.service.ts ***!
@@ -1509,17 +2134,508 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var ContractsService_1;
-var _a, _b;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContractsService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const volumetria_service_1 = __webpack_require__(/*! ./volumetria.service */ "./src/contracts/services/volumetria.service.ts");
 const omie_service_1 = __webpack_require__(/*! ./omie.service */ "./src/contracts/services/omie.service.ts");
+const propostas_service_1 = __webpack_require__(/*! ./propostas.service */ "./src/contracts/services/propostas.service.ts");
+const consolidacao_service_1 = __webpack_require__(/*! ./consolidacao.service */ "./src/contracts/services/consolidacao.service.ts");
+const configuracao_service_1 = __webpack_require__(/*! ./configuracao.service */ "./src/contracts/services/configuracao.service.ts");
 let ContractsService = ContractsService_1 = class ContractsService {
-    constructor(volumetriaService, omieService) {
+    constructor(volumetriaService, omieService, propostasService, consolidacaoService, configuracaoService) {
         this.volumetriaService = volumetriaService;
         this.omieService = omieService;
+        this.propostasService = propostasService;
+        this.consolidacaoService = consolidacaoService;
+        this.configuracaoService = configuracaoService;
         this.logger = new common_1.Logger(ContractsService_1.name);
+    }
+    async testarCriacaoContrato(empresaId, competencia, enviarParaOmie = false) {
+        try {
+            this.logger.log(`🧪 === TESTE CRIAÇÃO CONTRATO (SEM PERSISTIR) ===`);
+            this.logger.log(`Empresa: ${empresaId} | Competência: ${competencia}`);
+            this.logger.log(`Enviar para Omie: ${enviarParaOmie ? 'SIM' : 'NÃO (apenas simulação)'}`);
+            const { dataInicial, dataFinal } = this.calcularPeriodoCompetencia(competencia);
+            this.logger.log(`📅 Período: ${dataInicial} até ${dataFinal}`);
+            this.logger.log(`🔍 Buscando volumetria...`);
+            const volumetriaData = await this.volumetriaService.consultarVolumetria({
+                dataInicial,
+                dataFinal,
+                empresas: empresaId.toString()
+            });
+            if (!volumetriaData || volumetriaData.length === 0) {
+                this.logger.warn(`⚠️ Sem dados de volumetria para empresa ${empresaId}`);
+                return {
+                    success: false,
+                    error: 'Sem dados de volumetria no período',
+                    dadosProcessamento: {
+                        empresaId,
+                        competencia,
+                        periodo: { dataInicial, dataFinal }
+                    }
+                };
+            }
+            const produtos = this.extrairProdutosDaVolumetria(volumetriaData[0]);
+            this.logger.log(`📦 Produtos detectados na volumetria: ${produtos.length}`);
+            if (produtos.length === 0) {
+                this.logger.warn(`⚠️ Nenhum produto com valor encontrado`);
+                return {
+                    success: false,
+                    error: 'Nenhum produto com valor > 0',
+                    dadosProcessamento: {
+                        empresaId,
+                        competencia,
+                        volumetria: volumetriaData[0]
+                    }
+                };
+            }
+            this.logger.log(`🔗 Buscando TODOS os produtos com propostas comerciais...`);
+            const produtosComPropostasDisponiveis = await this.propostasService.obterProdutosComPropostas(empresaId);
+            this.logger.log(`📋 Produtos com propostas disponíveis: ${produtosComPropostasDisponiveis.join(', ')}`);
+            const produtosComProposta = [];
+            for (const nomeProduto of produtosComPropostasDisponiveis) {
+                try {
+                    this.logger.log(`   🔍 Processando produto: ${nomeProduto}`);
+                    const produtoNaVolumetria = produtos.find(p => p.nome.toLowerCase() === nomeProduto.toLowerCase());
+                    const numeroProposta = await this.propostasService.obterPropostaPorProduto(empresaId, nomeProduto, competencia);
+                    if (numeroProposta) {
+                        const quantidade = produtoNaVolumetria?.quantidade || 0;
+                        const precoDaProposta = await this.propostasService.obterPrecoProdutoNaProposta(numeroProposta, nomeProduto, quantidade);
+                        if (precoDaProposta !== null && precoDaProposta >= 0) {
+                            produtosComProposta.push({
+                                produto: nomeProduto,
+                                valor: precoDaProposta,
+                                quantidade: quantidade,
+                                proposta: numeroProposta,
+                                volumetriaReferencia: produtoNaVolumetria?.valor || 0
+                            });
+                            const statusVolumetria = produtoNaVolumetria ?
+                                `(${quantidade} transações, volumetria: R$ ${produtoNaVolumetria.valor})` :
+                                '(sem dados na volumetria)';
+                            this.logger.log(`   ✅ ${nomeProduto} → Proposta ${numeroProposta}: R$ ${precoDaProposta} ${statusVolumetria}`);
+                        }
+                        else {
+                            this.logger.warn(`   ❌ ${nomeProduto} → Proposta ${numeroProposta} encontrada, mas preço não calculado`);
+                        }
+                    }
+                    else {
+                        this.logger.warn(`   ❌ ${nomeProduto} → Sem proposta vinculada`);
+                    }
+                }
+                catch (error) {
+                    this.logger.error(`   🔥 ${nomeProduto} → Erro: ${error.message}`);
+                }
+            }
+            if (produtosComProposta.length === 0) {
+                this.logger.warn(`⚠️ Nenhum produto com proposta vinculada encontrado`);
+                return {
+                    success: false,
+                    error: 'Nenhum produto possui proposta vinculada',
+                    dadosProcessamento: {
+                        empresaId,
+                        competencia,
+                        produtos,
+                        produtosSemProposta: produtos.filter(p => p.valor > 0).map(p => p.nome)
+                    }
+                };
+            }
+            const propostasConsolidadas = this.agruparPorNumeroProposta(produtosComProposta);
+            this.logger.log(`📋 Propostas consolidadas: ${Object.keys(propostasConsolidadas).length}`);
+            Object.entries(propostasConsolidadas).forEach(([proposta, dados]) => {
+                const produtosDetalhes = dados.produtos.map(p => `${p.nome}(R$ ${p.valor})`).join(' + ');
+                this.logger.log(`   → Proposta ${proposta}: ${produtosDetalhes} = R$ ${dados.valorTotal}`);
+            });
+            const contratosPreparados = [];
+            for (const [numeroProposta, dadosProposta] of Object.entries(propostasConsolidadas)) {
+                try {
+                    const registroSimulado = {
+                        _id: `simulado_${Date.now()}`,
+                        competencia,
+                        empresaId,
+                        proposta: numeroProposta,
+                        valorTotal: dadosProposta.valorTotal,
+                        produtos: dadosProposta.produtos,
+                        status: 'ready_to_send'
+                    };
+                    const modeloContrato = await this.criarModeloContratoOmie(registroSimulado);
+                    contratosPreparados.push({
+                        proposta: numeroProposta,
+                        valorTotal: dadosProposta.valorTotal,
+                        produtos: dadosProposta.produtos,
+                        modeloContrato: modeloContrato,
+                        registroSimulado: registroSimulado
+                    });
+                    this.logger.log(`   📄 Contrato preparado - Proposta ${numeroProposta}`);
+                }
+                catch (error) {
+                    this.logger.error(`   🔥 Erro ao preparar contrato - Proposta ${numeroProposta}: ${error.message}`);
+                }
+            }
+            const resultadosEnvio = [];
+            if (enviarParaOmie) {
+                this.logger.log(`🚀 Enviando ${contratosPreparados.length} contratos para Omie...`);
+                for (const contrato of contratosPreparados) {
+                    try {
+                        const response = await this.omieService.incluirContrato(contrato.modeloContrato);
+                        resultadosEnvio.push({
+                            proposta: contrato.proposta,
+                            success: response.cCodStatus === '0',
+                            contratoId: response.nCodCtr,
+                            integrationCode: response.cCodIntCtr,
+                            message: response.cDescStatus,
+                            response: response
+                        });
+                        if (response.cCodStatus === '0') {
+                            this.logger.log(`   ✅ Proposta ${contrato.proposta} → Contrato ${response.nCodCtr} criado`);
+                        }
+                        else {
+                            this.logger.error(`   ❌ Proposta ${contrato.proposta} → Erro: ${response.cDescStatus}`);
+                        }
+                    }
+                    catch (error) {
+                        this.logger.error(`   🔥 Erro ao enviar proposta ${contrato.proposta}: ${error.message}`);
+                        resultadosEnvio.push({
+                            proposta: contrato.proposta,
+                            success: false,
+                            error: error.message
+                        });
+                    }
+                }
+            }
+            else {
+                this.logger.log(`💡 Simulação concluída - ${contratosPreparados.length} contratos preparados (não enviados)`);
+            }
+            const resultado = {
+                success: true,
+                modo: enviarParaOmie ? 'ENVIO_REAL' : 'SIMULACAO',
+                dadosProcessamento: {
+                    empresaId,
+                    competencia,
+                    periodo: { dataInicial, dataFinal },
+                    volumetria: volumetriaData[0],
+                    produtosEncontrados: produtos.length,
+                    produtosComProposta: produtosComProposta.length,
+                    propostas: Object.keys(propostasConsolidadas),
+                    contratosPreparados: contratosPreparados.length
+                },
+                produtos,
+                produtosComProposta,
+                propostasConsolidadas,
+                contratosPreparados,
+                resultadosEnvio: enviarParaOmie ? resultadosEnvio : null
+            };
+            this.logger.log(`✅ Teste concluído com sucesso!`);
+            return resultado;
+        }
+        catch (error) {
+            this.logger.error(`💥 Erro no teste: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                stack: error.stack
+            };
+        }
+    }
+    async processarConsolidacaoMensal(competencia, empresaIds) {
+        try {
+            this.logger.log(`=== INICIANDO CONSOLIDAÇÃO MENSAL ===`);
+            this.logger.log(`Competência: ${competencia}`);
+            const { dataInicial, dataFinal } = this.calcularPeriodoCompetencia(competencia);
+            this.logger.log(`Período: ${dataInicial} até ${dataFinal}`);
+            const empresas = empresaIds || (await this.configuracaoService.obterEmpresasAtivas()).map(id => id.toString());
+            this.logger.log(`Empresas a processar: ${empresas.join(', ')}`);
+            const resultados = [];
+            for (const empresaId of empresas) {
+                try {
+                    this.logger.log(`--- Processando empresa: ${empresaId} ---`);
+                    const resultadoEmpresa = await this.processarEmpresaPorProposta(parseInt(empresaId), dataInicial, dataFinal, competencia);
+                    resultados.push(resultadoEmpresa);
+                }
+                catch (error) {
+                    this.logger.error(`Erro ao processar empresa ${empresaId}: ${error.message}`);
+                    resultados.push({
+                        empresaId: parseInt(empresaId),
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+            const empresasComSucesso = resultados.filter(r => r.success).length;
+            this.logger.log(`=== CONSOLIDAÇÃO MENSAL CONCLUÍDA ===`);
+            this.logger.log(`Total empresas: ${resultados.length}`);
+            this.logger.log(`Sucessos: ${empresasComSucesso}`);
+            this.logger.log(`Erros: ${resultados.length - empresasComSucesso}`);
+            return {
+                success: true,
+                competencia,
+                empresasProcessadas: resultados.length,
+                empresasComSucesso,
+                resultados
+            };
+        }
+        catch (error) {
+            this.logger.error(`Erro crítico na consolidação mensal: ${error.message}`);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+    async processarEmpresaPorProposta(empresaId, dataInicial, dataFinal, competencia) {
+        try {
+            this.logger.log(`Consultando volumetria empresa ${empresaId}...`);
+            const volumetriaData = await this.volumetriaService.consultarVolumetria({
+                dataInicial,
+                dataFinal,
+                empresas: empresaId.toString()
+            });
+            if (!volumetriaData || volumetriaData.length === 0) {
+                this.logger.warn(`Sem dados de volumetria - Empresa: ${empresaId}`);
+                return {
+                    empresaId,
+                    success: true,
+                    propostas: [],
+                    contratosEnviados: 0,
+                    motivo: 'Sem dados de volumetria no período'
+                };
+            }
+            const produtos = this.extrairProdutosDaVolumetria(volumetriaData[0]);
+            if (produtos.length === 0) {
+                this.logger.warn(`Nenhum produto com valor encontrado - Empresa: ${empresaId}`);
+                return {
+                    empresaId,
+                    success: true,
+                    propostas: [],
+                    contratosEnviados: 0,
+                    motivo: 'Nenhum produto com valor > 0'
+                };
+            }
+            this.logger.log(`Produtos encontrados: ${produtos.map(p => `${p.nome}(${p.valor})`).join(', ')}`);
+            const produtosComProposta = [];
+            for (const produto of produtos) {
+                if (produto.valor > 0) {
+                    try {
+                        const numeroProposta = await this.propostasService.obterPropostaPorProduto(empresaId, produto.nome, competencia);
+                        if (numeroProposta) {
+                            produtosComProposta.push({
+                                produto: produto.nome,
+                                valor: produto.valor,
+                                quantidade: produto.quantidade,
+                                proposta: numeroProposta
+                            });
+                            this.logger.log(`✅ ${produto.nome} → Proposta: ${numeroProposta} (R$ ${produto.valor})`);
+                        }
+                        else {
+                            this.logger.warn(`❌ ${produto.nome} → Sem proposta vinculada`);
+                        }
+                    }
+                    catch (error) {
+                        this.logger.error(`Erro ao obter proposta para ${produto.nome}: ${error.message}`);
+                    }
+                }
+            }
+            if (produtosComProposta.length === 0) {
+                return {
+                    empresaId,
+                    success: true,
+                    propostas: [],
+                    contratosEnviados: 0,
+                    motivo: 'Nenhum produto com proposta vinculada'
+                };
+            }
+            const propostasConsolidadas = this.agruparPorNumeroProposta(produtosComProposta);
+            this.logger.log(`Propostas consolidadas: ${Object.keys(propostasConsolidadas).join(', ')}`);
+            const registrosConsolidacao = [];
+            for (const [numeroProposta, dadosProposta] of Object.entries(propostasConsolidadas)) {
+                const dadosConsolidacao = {
+                    competencia,
+                    empresaId,
+                    numeroProposta,
+                    valorTotal: dadosProposta.valorTotal,
+                    produtos: dadosProposta.produtos
+                };
+                const registro = await this.consolidacaoService.persistirConsolidacao(dadosConsolidacao);
+                registrosConsolidacao.push(registro);
+                this.logger.log(`💾 Proposta ${numeroProposta} salva - Status: ${registro.status}`);
+            }
+            const contratosEnviados = [];
+            for (const registro of registrosConsolidacao) {
+                if (registro.status === 'ready_to_send') {
+                    try {
+                        const contratoOmie = await this.enviarContratoParaOmie(registro);
+                        contratosEnviados.push(contratoOmie);
+                        this.logger.log(`🚀 Contrato enviado - Proposta: ${registro.proposta} - ID Omie: ${contratoOmie.contratoId}`);
+                    }
+                    catch (error) {
+                        this.logger.error(`Erro ao enviar contrato - Proposta ${registro.proposta}: ${error.message}`);
+                        await this.consolidacaoService.atualizarStatusConsolidacao(registro._id.toString(), 'error', error.message);
+                    }
+                }
+            }
+            return {
+                empresaId,
+                success: true,
+                propostas: Object.keys(propostasConsolidadas),
+                registrosConsolidacao: registrosConsolidacao.length,
+                contratosEnviados: contratosEnviados.length,
+                detalhes: contratosEnviados
+            };
+        }
+        catch (error) {
+            this.logger.error(`Erro ao processar empresa ${empresaId}: ${error.message}`);
+            throw error;
+        }
+    }
+    extrairProdutosDaVolumetria(volumetria) {
+        const produtos = [];
+        const regrasExtracao = [
+            {
+                nome: 'cobranca',
+                condicao: (v) => v.cobranca && (v.cobranca.qtdeTitulos > 0 || v.cobranca.valorTotal > 0),
+                valor: (v) => v.cobranca.valorTotal || 0,
+                quantidade: (v) => v.cobranca.qtdeTitulos || 0
+            },
+            {
+                nome: 'pixpay',
+                condicao: (v) => v.pixpay && (v.pixpay.qtdeMotoristas > 0 || v.pixpay.valorTotal > 0),
+                valor: (v) => v.pixpay.valorTotal || 0,
+                quantidade: (v) => v.pixpay.qtdeMotoristas || v.pixpay.qtdeTitulos || 0
+            },
+            {
+                nome: 'webcheckout',
+                condicao: (v) => v.webcheckout && (v.webcheckout.qtdeTitulos > 0 || v.webcheckout.valorTotal > 0),
+                valor: (v) => v.webcheckout.valorTotal || 0,
+                quantidade: (v) => v.webcheckout.qtdeTitulos || 0
+            },
+            {
+                nome: 'bolepix',
+                condicao: (v) => v.bolepix && (v.bolepix.qtdeTitulos > 0 || v.bolepix.valorTotal > 0),
+                valor: (v) => v.bolepix.valorTotal || 0,
+                quantidade: (v) => v.bolepix.qtdeTitulos || 0
+            }
+        ];
+        for (const regra of regrasExtracao) {
+            if (regra.condicao(volumetria)) {
+                const valor = regra.valor(volumetria);
+                const quantidade = regra.quantidade(volumetria);
+                produtos.push({
+                    nome: regra.nome,
+                    valor: valor,
+                    quantidade: quantidade
+                });
+            }
+        }
+        const produtosMapeados = regrasExtracao.map(r => r.nome);
+        const chavesVolumetria = Object.keys(volumetria).filter(k => k !== 'idEmpresa' && !produtosMapeados.includes(k));
+        for (const chave of chavesVolumetria) {
+            const dados = volumetria[chave];
+            if (dados && typeof dados === 'object') {
+                const valor = dados.valorTotal || 0;
+                const quantidade = dados.qtdeTitulos || dados.qtdeMotoristas || dados.quantidade || 0;
+                if (valor > 0 || quantidade > 0) {
+                    produtos.push({
+                        nome: chave,
+                        valor: valor,
+                        quantidade: quantidade
+                    });
+                    this.logger.log(`   ⚠️ Produto não mapeado encontrado: ${chave} - R$ ${valor} (qty: ${quantidade})`);
+                }
+            }
+        }
+        return produtos;
+    }
+    agruparPorNumeroProposta(produtos) {
+        const agrupamento = {};
+        for (const produto of produtos) {
+            const { proposta, valor, produto: nomeProduto, quantidade } = produto;
+            if (!agrupamento[proposta]) {
+                agrupamento[proposta] = {
+                    valorTotal: 0,
+                    produtos: []
+                };
+            }
+            agrupamento[proposta].valorTotal += valor;
+            agrupamento[proposta].produtos.push({
+                nome: nomeProduto,
+                valor: valor,
+                quantidade: quantidade || 0
+            });
+        }
+        for (const proposta of Object.keys(agrupamento)) {
+            agrupamento[proposta].valorTotal = Math.round(agrupamento[proposta].valorTotal * 100) / 100;
+        }
+        return agrupamento;
+    }
+    async enviarContratoParaOmie(registroConsolidacao) {
+        const contratoModel = await this.criarModeloContratoOmie(registroConsolidacao);
+        const response = await this.omieService.incluirContrato(contratoModel);
+        if (response.cCodStatus === '0') {
+            await this.consolidacaoService.atualizarStatusConsolidacao(registroConsolidacao._id.toString(), 'sent', null, contratoModel, response);
+        }
+        else {
+            await this.consolidacaoService.atualizarStatusConsolidacao(registroConsolidacao._id.toString(), 'error', response.cDescStatus, contratoModel, response);
+        }
+        return {
+            proposta: registroConsolidacao.proposta,
+            success: response.cCodStatus === '0',
+            contratoId: response.nCodCtr,
+            integrationCode: response.cCodIntCtr,
+            message: response.cDescStatus
+        };
+    }
+    async criarModeloContratoOmie(registroConsolidacao) {
+        const { competencia, empresaId, proposta: numeroProposta, valorTotal, produtos } = registroConsolidacao;
+        const configEmpresa = await this.configuracaoService.obterConfiguracaoEmpresa(empresaId);
+        const [ano, mes] = competencia.split('-');
+        const cCodIntCtr = `CTR-${ano}-${mes}-EMP${empresaId}-PROP-${numeroProposta}`;
+        const descricaoProdutos = produtos.map(p => p.nome).join(', ');
+        const descricaoCompleta = `Serviços do período ${mes}/${ano} — Proposta ${numeroProposta} — Produtos: ${descricaoProdutos}`;
+        return {
+            cabecalho: {
+                cCodIntCtr: cCodIntCtr,
+                cCodSit: '10',
+                cTipoFat: configEmpresa.configuracao.tipoFaturamento,
+                dVigInicial: configEmpresa.configuracao.vigenciaInicial,
+                dVigFinal: configEmpresa.configuracao.vigenciaFinal,
+                nCodCli: configEmpresa.codigoClienteOmie,
+                nDiaFat: configEmpresa.configuracao.diaFaturamento,
+                nValTotMes: valorTotal
+            },
+            itensContrato: [
+                {
+                    itemCabecalho: {
+                        codIntItem: '1',
+                        codLC116: '3.05',
+                        natOperacao: '01',
+                        quant: 1,
+                        seq: 1,
+                        valorTotal: valorTotal,
+                        valorUnit: valorTotal,
+                        cNaoGerarFinanceiro: 'N'
+                    },
+                    itemDescrServ: {
+                        descrCompleta: descricaoCompleta
+                    },
+                    itemImpostos: {
+                        aliqISS: 0,
+                        retISS: 'N'
+                    }
+                }
+            ],
+            observacoes: {
+                cObsContrato: `Consolidação automática InAnbetec. Competência ${mes}/${ano}.`
+            }
+        };
+    }
+    calcularPeriodoCompetencia(competencia) {
+        const [ano, mes] = competencia.split('-');
+        const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+        return {
+            dataInicial: `${ano}-${mes}-01`,
+            dataFinal: `${ano}-${mes}-${ultimoDia.toString().padStart(2, '0')}`
+        };
     }
     async createContractFromVolumetria(empresaId, dataInicial, dataFinal, dadosEmpresa = {}) {
         try {
@@ -1562,66 +2678,6 @@ let ContractsService = ContractsService_1 = class ContractsService {
             };
         }
     }
-    async createContractsFromReports(empresaId, dataInicial, dataFinal, dadosEmpresa = {}) {
-        try {
-            this.logger.log('Iniciando criação de contratos baseados em relatórios');
-            const relatorios = await this.volumetriaService.buscarRelatorios({
-                dataInicial,
-                dataFinal,
-                empresas: empresaId
-            });
-            if (!relatorios || relatorios.length === 0) {
-                return {
-                    success: false,
-                    error: 'Nenhum relatório encontrado para o período informado'
-                };
-            }
-            const gruposProdutos = this.volumetriaService.agruparRelatoriosPorProduto(relatorios);
-            const contratosCreated = [];
-            const erros = [];
-            for (const [tipoProduto, relatoriosProduto] of Object.entries(gruposProdutos)) {
-                if (relatoriosProduto.length > 0) {
-                    try {
-                        this.logger.log(`Criando contrato para produto: ${tipoProduto}`);
-                        const dadosContrato = this.volumetriaService.mapearRelatorioPorProduto(relatoriosProduto, tipoProduto, dadosEmpresa);
-                        if (dadosContrato) {
-                            const contractModel = this.createContractModel(dadosContrato);
-                            const response = await this.omieService.incluirContrato(contractModel);
-                            contratosCreated.push({
-                                produto: tipoProduto,
-                                success: response.cCodStatus === '0',
-                                contractId: response.nCodCtr,
-                                integrationCode: response.cCodIntCtr,
-                                message: response.cDescStatus,
-                                relatorios: relatoriosProduto.length,
-                                totalRegistros: relatoriosProduto.reduce((sum, rel) => sum + (rel.record_count || 0), 0)
-                            });
-                        }
-                    }
-                    catch (error) {
-                        erros.push({
-                            produto: tipoProduto,
-                            error: error.message
-                        });
-                    }
-                }
-            }
-            return {
-                success: contratosCreated.length > 0,
-                contratosCreated,
-                erros,
-                totalProdutos: Object.keys(gruposProdutos).filter(key => gruposProdutos[key].length > 0).length,
-                relatoriosProcessados: relatorios.length
-            };
-        }
-        catch (error) {
-            this.logger.error(`Erro na criação de contratos baseados em relatórios: ${error.message}`);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
     async getVolumetriaData(empresaId, dataInicial, dataFinal) {
         try {
             const volumetriaData = await this.volumetriaService.consultarVolumetria({
@@ -1636,40 +2692,6 @@ let ContractsService = ContractsService_1 = class ContractsService {
                 servicos: servicosEmpresa,
                 contratoMapeado: volumetriaData && volumetriaData.length > 0 ?
                     this.volumetriaService.mapearParaContratoOmie(volumetriaData[0]) : null
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async getReportsData(empresaId, dataInicial, dataFinal) {
-        try {
-            this.logger.log('Consultando relatórios para análise');
-            const relatorios = await this.volumetriaService.buscarRelatorios({
-                dataInicial,
-                dataFinal,
-                empresas: empresaId
-            });
-            const gruposProdutos = this.volumetriaService.agruparRelatoriosPorProduto(relatorios);
-            const contratosMapeados = {};
-            for (const [tipoProduto, relatoriosProduto] of Object.entries(gruposProdutos)) {
-                if (relatoriosProduto.length > 0) {
-                    contratosMapeados[tipoProduto] = this.volumetriaService.mapearRelatorioPorProduto(relatoriosProduto, tipoProduto);
-                }
-            }
-            return {
-                success: true,
-                relatorios,
-                gruposProdutos,
-                contratosMapeados,
-                resumo: {
-                    totalRelatorios: relatorios.length,
-                    produtosEncontrados: Object.keys(gruposProdutos).filter(key => gruposProdutos[key].length > 0),
-                    totalRegistros: relatorios.reduce((sum, rel) => sum + (rel.record_count || 0), 0)
-                }
             };
         }
         catch (error) {
@@ -1833,7 +2855,7 @@ let ContractsService = ContractsService_1 = class ContractsService {
 exports.ContractsService = ContractsService;
 exports.ContractsService = ContractsService = ContractsService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof volumetria_service_1.VolumetriaService !== "undefined" && volumetria_service_1.VolumetriaService) === "function" ? _a : Object, typeof (_b = typeof omie_service_1.OmieService !== "undefined" && omie_service_1.OmieService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof volumetria_service_1.VolumetriaService !== "undefined" && volumetria_service_1.VolumetriaService) === "function" ? _a : Object, typeof (_b = typeof omie_service_1.OmieService !== "undefined" && omie_service_1.OmieService) === "function" ? _b : Object, typeof (_c = typeof propostas_service_1.PropostasService !== "undefined" && propostas_service_1.PropostasService) === "function" ? _c : Object, typeof (_d = typeof consolidacao_service_1.ConsolidacaoService !== "undefined" && consolidacao_service_1.ConsolidacaoService) === "function" ? _d : Object, typeof (_e = typeof configuracao_service_1.ConfiguracaoService !== "undefined" && configuracao_service_1.ConfiguracaoService) === "function" ? _e : Object])
 ], ContractsService);
 
 
@@ -1988,6 +3010,620 @@ exports.OmieService = OmieService = OmieService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeof (_a = typeof axios_1.HttpService !== "undefined" && axios_1.HttpService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
 ], OmieService);
+
+
+/***/ }),
+
+/***/ "./src/contracts/services/propostas.service.ts":
+/*!*****************************************************!*\
+  !*** ./src/contracts/services/propostas.service.ts ***!
+  \*****************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var PropostasService_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PropostasService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let PropostasService = PropostasService_1 = class PropostasService {
+    constructor(configService, httpService) {
+        this.configService = configService;
+        this.httpService = httpService;
+        this.logger = new common_1.Logger(PropostasService_1.name);
+        this._propostasGeradas = new Set();
+    }
+    async obterPropostaPorProduto(empresaId, nomeProduto, competencia) {
+        try {
+            this.logger.log(`Obtendo proposta - Empresa: ${empresaId}, Produto: ${nomeProduto}, Competência: ${competencia}`);
+            const propostaPorConfig = await this.buscarPropostaNaConfiguracao(empresaId, nomeProduto, competencia);
+            if (propostaPorConfig) {
+                return propostaPorConfig;
+            }
+            const propostaPorAPI = await this.buscarPropostaNaAPI(empresaId, nomeProduto, competencia);
+            if (propostaPorAPI) {
+                return propostaPorAPI;
+            }
+            const propostaPorMapeamento = this.obterPropostaPorMapeamentoEstatico(empresaId, nomeProduto);
+            if (propostaPorMapeamento) {
+                return propostaPorMapeamento;
+            }
+            this.logger.warn(`Nenhuma proposta encontrada para: Empresa ${empresaId}, Produto ${nomeProduto}`);
+            return null;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter proposta: ${error.message}`);
+            return null;
+        }
+    }
+    async obterPrecoProdutoNaProposta(numeroProposta, nomeProduto, quantidade) {
+        try {
+            this.logger.log(`Calculando preço - Proposta: ${numeroProposta}, Produto: ${nomeProduto}, Qty: ${quantidade}`);
+            const precoPorAPI = await this.buscarPrecoViaAPI(numeroProposta, nomeProduto, quantidade);
+            if (precoPorAPI !== null)
+                return precoPorAPI;
+            const precoPorTabela = await this.buscarPrecoViaTabela(numeroProposta, nomeProduto, quantidade);
+            if (precoPorTabela !== null)
+                return precoPorTabela;
+            const precoPorRegras = await this.calcularPrecoViaRegras(numeroProposta, nomeProduto, quantidade);
+            if (precoPorRegras !== null)
+                return precoPorRegras;
+            const precoUltimoConhecido = await this.buscarUltimoPrecoConhecido(numeroProposta, nomeProduto);
+            if (precoUltimoConhecido !== null) {
+                this.logger.warn(`⚠️ Usando último preço conhecido: R$ ${precoUltimoConhecido} (${nomeProduto})`);
+                return precoUltimoConhecido;
+            }
+            this.logger.warn(`❌ Não foi possível calcular preço para: ${nomeProduto} na proposta ${numeroProposta}`);
+            return null;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao calcular preço do produto: ${error.message}`);
+            return null;
+        }
+    }
+    async buscarPrecoViaAPI(proposta, produto, quantidade) {
+        try {
+            const inanbetecUrl = this.configService.get('INANBETEC_API_URL');
+            if (!inanbetecUrl)
+                return null;
+            const endpoint = `${inanbetecUrl}/pricing/proposta/${proposta}/produto/${produto}`;
+            try {
+                const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+                    params: { quantidade },
+                    timeout: 1500
+                }));
+                const preco = response.data?.preco || response.data?.valor || response.data?.valorTotal;
+                if (typeof preco === 'number' && preco >= 0) {
+                    this.logger.log(`✅ Preço via API: R$ ${preco} (${produto})`);
+                    return preco;
+                }
+            }
+            catch (error) {
+            }
+            return null;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    async buscarPrecoViaTabela(proposta, produto, quantidade) {
+        try {
+            const inanbetecUrl = this.configService.get('INANBETEC_API_URL');
+            if (!inanbetecUrl)
+                return null;
+            const endpoint = `${inanbetecUrl}/propostas/${proposta}/tabela-precos`;
+            try {
+                const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, { timeout: 1500 }));
+                const tabela = response.data?.tabelaPrecos || response.data?.produtos || response.data || {};
+                if (typeof tabela === 'object' && tabela[produto.toLowerCase()]) {
+                    const precoProduto = tabela[produto.toLowerCase()];
+                    let preco = typeof precoProduto === 'number' ? precoProduto : precoProduto.valor || precoProduto.preco;
+                    if (typeof preco === 'number' && preco >= 0) {
+                        this.logger.log(`✅ Preço via tabela: R$ ${preco} (${produto})`);
+                        return preco;
+                    }
+                }
+            }
+            catch (error) {
+            }
+            return null;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    async calcularPrecoViaRegras(proposta, produto, quantidade) {
+        try {
+            switch (produto.toLowerCase()) {
+                case 'pixpay':
+                    if (quantidade > 0) {
+                        const preco = quantidade * 22.0;
+                        this.logger.log(`✅ Preço calculado (PixPay): R$ ${preco} (${quantidade} × R$ 22)`);
+                        return preco;
+                    }
+                    break;
+                case 'webcheckout':
+                case '@webcheckout':
+                    const taxaBase = quantidade > 1000 ? 2000 : 1500;
+                    this.logger.log(`✅ Preço calculado (WebCheckout): R$ ${taxaBase}`);
+                    return taxaBase;
+                case 'cobranca':
+                case 'cobrança':
+                    if (quantidade > 0) {
+                        const preco = Math.round(quantidade * 0.06 * 100) / 100;
+                        this.logger.log(`✅ Preço calculado (Cobrança): R$ ${preco} (${quantidade} × R$ 0.06)`);
+                        return preco;
+                    }
+                    break;
+                case 'bolepix':
+                    if (quantidade > 0) {
+                        const preco = Math.round(quantidade * 0.06 * 100) / 100;
+                        this.logger.log(`✅ Preço calculado (BolePix): R$ ${preco} (${quantidade} × R$ 0.06)`);
+                        return preco;
+                    }
+                    break;
+                case 'pagamentos':
+                    const preco = quantidade > 10000 ? quantidade * 0.01 : 0;
+                    this.logger.log(`✅ Preço calculado (Pagamentos): R$ ${preco}`);
+                    return preco;
+                default:
+                    return 0;
+            }
+            return null;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    async buscarUltimoPrecoConhecido(proposta, produto) {
+        try {
+            const inanbetecUrl = this.configService.get('INANBETEC_API_URL');
+            if (!inanbetecUrl)
+                return null;
+            const endpoints = [
+                `${inanbetecUrl}/historico-precos/${proposta}/${produto}`,
+                `${inanbetecUrl}/contratos/ultimo-preco/${produto}`
+            ];
+            for (const endpoint of endpoints) {
+                try {
+                    this.logger.debug(`📚 Buscando último preço: ${endpoint}`);
+                    const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, { timeout: 2000 }));
+                    const ultimoPreco = response.data?.ultimoPreco || response.data?.valor || response.data?.preco;
+                    if (typeof ultimoPreco === 'number' && ultimoPreco >= 0) {
+                        this.logger.log(`✅ Último preço conhecido: R$ ${ultimoPreco} (${produto})`);
+                        return ultimoPreco;
+                    }
+                }
+                catch (error) {
+                    this.logger.debug(`Último preço endpoint falhou: ${error.message}`);
+                    continue;
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            this.logger.debug(`Busca último preço falhou: ${error.message}`);
+            return null;
+        }
+    }
+    async buscarPropostaNaConfiguracao(empresaId, nomeProduto, competencia) {
+        try {
+            const inanbetecUrl = this.configService.get('INANBETEC_API_URL');
+            if (!inanbetecUrl) {
+                return null;
+            }
+            const endpointPrincipal = `${inanbetecUrl}/propostas/empresa/${empresaId}/produto/${nomeProduto}`;
+            try {
+                const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpointPrincipal, {
+                    params: { competencia },
+                    timeout: 2000
+                }));
+                const proposta = response.data?.numeroProposta || response.data?.numero;
+                if (proposta) {
+                    this.logger.log(`✅ Proposta encontrada via API: ${proposta} (${nomeProduto})`);
+                    return proposta;
+                }
+            }
+            catch (error) {
+            }
+            return null;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    async buscarPropostaEspecifica(baseUrl, empresaId, produto, competencia) {
+        try {
+            const endpoints = [
+                `${baseUrl}/propostas/empresa/${empresaId}/produto/${produto}`,
+                `${baseUrl}/comercial/propostas/${empresaId}/${produto}`,
+                `${baseUrl}/contratos/proposta-produto`
+            ];
+            for (const endpoint of endpoints) {
+                try {
+                    this.logger.debug(`🎯 Buscando proposta específica: ${endpoint}`);
+                    const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+                        params: { competencia, status: 'ativo' },
+                        timeout: 3000
+                    }));
+                    const proposta = response.data?.numeroProposta || response.data?.numero || response.data?.proposta;
+                    if (proposta) {
+                        this.logger.log(`✅ Proposta específica encontrada: ${proposta} (${produto})`);
+                        return proposta;
+                    }
+                }
+                catch (error) {
+                    this.logger.debug(`Endpoint específico falhou: ${error.message}`);
+                    continue;
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            this.logger.debug(`Busca específica falhou: ${error.message}`);
+            return null;
+        }
+    }
+    async buscarPropostaViaContratos(baseUrl, empresaId, produto) {
+        try {
+            const endpoints = [
+                `${baseUrl}/contratos/ativos/${empresaId}`,
+                `${baseUrl}/empresas/${empresaId}/contratos/ativos`
+            ];
+            for (const endpoint of endpoints) {
+                try {
+                    this.logger.debug(`📄 Buscando via contratos: ${endpoint}`);
+                    const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+                        params: { produto, status: 'ativo' },
+                        timeout: 4000
+                    }));
+                    const contratos = response.data?.contratos || response.data || [];
+                    if (Array.isArray(contratos)) {
+                        const contratoComProduto = contratos.find(c => c.produtos && c.produtos.includes(produto.toLowerCase()));
+                        if (contratoComProduto && contratoComProduto.numeroProposta) {
+                            this.logger.log(`✅ Proposta via contrato: ${contratoComProduto.numeroProposta} (${produto})`);
+                            return contratoComProduto.numeroProposta;
+                        }
+                    }
+                }
+                catch (error) {
+                    this.logger.debug(`Endpoint contrato falhou: ${error.message}`);
+                    continue;
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            this.logger.debug(`Busca via contratos falhou: ${error.message}`);
+            return null;
+        }
+    }
+    async buscarPropostaHistorica(baseUrl, empresaId, produto) {
+        try {
+            const endpoints = [
+                `${baseUrl}/propostas/historico/${empresaId}`,
+                `${baseUrl}/comercial/historico-propostas`
+            ];
+            for (const endpoint of endpoints) {
+                try {
+                    this.logger.debug(`📚 Buscando histórico: ${endpoint}`);
+                    const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+                        params: { produto, empresaId, limit: 1 },
+                        timeout: 3000
+                    }));
+                    const historico = response.data?.propostas || response.data || [];
+                    if (Array.isArray(historico) && historico.length > 0) {
+                        const ultimaProposta = historico[0];
+                        const numero = ultimaProposta.numero || ultimaProposta.numeroProposta;
+                        if (numero) {
+                            this.logger.log(`✅ Proposta histórica: ${numero} (${produto})`);
+                            return numero;
+                        }
+                    }
+                }
+                catch (error) {
+                    this.logger.debug(`Endpoint histórico falhou: ${error.message}`);
+                    continue;
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            this.logger.debug(`Busca histórica falhou: ${error.message}`);
+            return null;
+        }
+    }
+    async buscarPropostaNaAPI(empresaId, nomeProduto, competencia) {
+        try {
+            const inanbetecUrl = this.configService.get('INANBETEC_API_URL');
+            if (!inanbetecUrl)
+                return null;
+            const endpoint = `${inanbetecUrl}/propostas`;
+            try {
+                const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+                    params: {
+                        empresa: empresaId,
+                        produto: nomeProduto,
+                        competencia,
+                        status: 'ativo'
+                    },
+                    timeout: 2000
+                }));
+                const propostas = response.data?.propostas || response.data || [];
+                if (Array.isArray(propostas) && propostas.length > 0) {
+                    const proposta = propostas[0];
+                    const numeroProposta = proposta.numero || proposta.numeroProposta || proposta.id;
+                    if (numeroProposta) {
+                        this.logger.log(`✅ Proposta encontrada via API geral: ${numeroProposta}`);
+                        return numeroProposta;
+                    }
+                }
+            }
+            catch (error) {
+            }
+            return null;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    obterPropostaPorMapeamentoEstatico(empresaId, nomeProduto) {
+        const ano = new Date().getFullYear();
+        const mes = String(new Date().getMonth() + 1).padStart(2, '0');
+        const sufixoEmpresa = String(empresaId).padStart(3, '0');
+        const propostaPadrao = `${ano}${mes}00${sufixoEmpresa}`;
+        if (!this._propostasGeradas)
+            this._propostasGeradas = new Set();
+        if (!this._propostasGeradas.has(empresaId)) {
+            this.logger.log(`🔄 Proposta dinâmica gerada: ${propostaPadrao} (Empresa ${empresaId})`);
+            this._propostasGeradas.add(empresaId);
+        }
+        return propostaPadrao;
+    }
+    async listarPropostasEmpresa(empresaId, competencia) {
+        try {
+            const produtos = this.obterProdutosEmpresa(empresaId);
+            const propostas = [];
+            for (const produto of produtos) {
+                const numeroProposta = this.obterPropostaPorMapeamentoEstatico(empresaId, produto);
+                if (numeroProposta) {
+                    propostas.push({
+                        numero: numeroProposta,
+                        empresaId,
+                        produto,
+                        competencia: competencia || new Date().toISOString().slice(0, 7),
+                        vigenciaInicial: '01/01/2025',
+                        vigenciaFinal: '31/12/2025'
+                    });
+                }
+            }
+            return propostas;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao listar propostas da empresa ${empresaId}: ${error.message}`);
+            return [];
+        }
+    }
+    async obterProdutosComPropostas(empresaId) {
+        try {
+            this.logger.log(`Obtendo produtos com propostas para empresa ${empresaId}`);
+            const produtosDinamicos = await this.descobrirProdutosViaVolumetria(empresaId);
+            if (produtosDinamicos.length > 0) {
+                this.logger.log(`✅ Encontrados ${produtosDinamicos.length} produtos via API dinâmica`);
+                return produtosDinamicos;
+            }
+            this.logger.debug('🔄 Usando mapeamento estático como fallback');
+            return this.obterProdutosEmpresa(empresaId);
+        }
+        catch (error) {
+            this.logger.error(`Erro ao obter produtos da empresa ${empresaId}: ${error.message}`);
+            return this.obterProdutosEmpresa(empresaId);
+        }
+    }
+    async consultarProdutosViaAPI(baseUrl, empresaId) {
+        const endpoints = [
+            `${baseUrl}/empresas/${empresaId}/produtos`,
+            `${baseUrl}/propostas/empresa/${empresaId}/produtos`,
+            `${baseUrl}/comercial/empresa/${empresaId}/produtos`
+        ];
+        for (const endpoint of endpoints) {
+            try {
+                this.logger.debug(`🔍 Consultando: ${endpoint}`);
+                const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(endpoint, {
+                    params: { status: 'ativo', temProposta: true },
+                    timeout: 3000
+                }));
+                const produtos = response.data?.produtos || response.data || [];
+                if (Array.isArray(produtos) && produtos.length > 0) {
+                    const nomesProdutos = produtos.map(p => p.nome || p.produto || p.codigo || p.id).filter(Boolean);
+                    if (nomesProdutos.length > 0) {
+                        this.logger.log(`✅ API: ${nomesProdutos.length} produtos encontrados: ${nomesProdutos.join(', ')}`);
+                        return nomesProdutos;
+                    }
+                }
+            }
+            catch (error) {
+                this.logger.debug(`Endpoint ${endpoint} falhou: ${error.message}`);
+                continue;
+            }
+        }
+        return [];
+    }
+    async descobrirProdutosViaVolumetria(empresaId) {
+        try {
+            const baseUrl = this.configService.get('INANBETEC_API_URL');
+            const urlsVolumetria = [
+                `${baseUrl}/empresas/${empresaId}/volumetria`,
+                `${baseUrl}/clientes/volumetria/${empresaId}`
+            ];
+            for (const url of urlsVolumetria) {
+                try {
+                    const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(url, { timeout: 1500 }));
+                    if (response.data) {
+                        const produtos = this.extrairProdutosDaVolumetria(response.data);
+                        if (produtos.length > 0) {
+                            this.logger.log(`✅ Volumetria: ${produtos.length} produtos encontrados`);
+                            return produtos;
+                        }
+                    }
+                }
+                catch (error) {
+                    continue;
+                }
+            }
+            return [];
+        }
+        catch (error) {
+            return [];
+        }
+    }
+    extrairProdutosDaVolumetria(dadosVolumetria) {
+        try {
+            const produtos = new Set();
+            const datasets = [
+                dadosVolumetria,
+                dadosVolumetria?.produtos,
+                dadosVolumetria?.volumetria,
+                dadosVolumetria?.data,
+                dadosVolumetria?.items
+            ].filter(Boolean);
+            for (const dataset of datasets) {
+                if (Array.isArray(dataset)) {
+                    dataset.forEach(item => {
+                        const nome = item?.produto || item?.nome || item?.name || item?.tipo;
+                        if (nome && typeof nome === 'string') {
+                            produtos.add(nome.toLowerCase());
+                        }
+                    });
+                }
+                else if (typeof dataset === 'object') {
+                    Object.keys(dataset).forEach(key => {
+                        if (typeof dataset[key] === 'number' && dataset[key] > 0) {
+                            produtos.add(key.toLowerCase());
+                        }
+                    });
+                }
+            }
+            return Array.from(produtos);
+        }
+        catch (error) {
+            return [];
+        }
+    }
+    async buscarProdutosDinamicamente(empresaId, dataInicio, dataFim) {
+        try {
+            const baseUrl = this.configService.get('INANBETEC_API_URL');
+            const urlsVolumetria = [
+                `${baseUrl}/empresas/${empresaId}/volumetria${dataInicio ? `?inicio=${dataInicio}&fim=${dataFim}` : ''}`,
+                `${baseUrl}/clientes/volumetria/${empresaId}${dataInicio ? `?periodo=${dataInicio}-${dataFim}` : ''}`
+            ];
+            for (const url of urlsVolumetria) {
+                try {
+                    const response = await this.httpService.axiosRef.get(url, { timeout: 1500 });
+                    if (response.data) {
+                        const produtos = this.extrairProdutosDaVolumetriaCompleta(response.data);
+                        if (produtos.length > 0) {
+                            this.logger.log(`✅ Descobertos ${produtos.length} produtos via volumetria`);
+                            return produtos;
+                        }
+                    }
+                }
+                catch (error) {
+                    continue;
+                }
+            }
+            this.logger.log(`📦 Usando produtos padrão (volumetria não disponível)`);
+            return ['PixPay', 'WebCheckout', 'Cobranca', 'BolePix', 'Pagamentos'];
+        }
+        catch (error) {
+            this.logger.error(`Erro ao buscar produtos dinamicamente: ${error.message}`);
+            return [];
+        }
+    }
+    extrairProdutosDaVolumetriaCompleta(dadosVolumetria) {
+        try {
+            const produtos = new Set();
+            const datasets = [
+                dadosVolumetria,
+                dadosVolumetria?.produtos,
+                dadosVolumetria?.volumetria,
+                dadosVolumetria?.data
+            ].filter(Boolean);
+            for (const dataset of datasets) {
+                if (Array.isArray(dataset)) {
+                    dataset.forEach(item => {
+                        const nome = item?.produto || item?.nome || item?.name;
+                        if (nome && typeof nome === 'string') {
+                            produtos.add(nome);
+                        }
+                    });
+                }
+                else if (typeof dataset === 'object') {
+                    Object.keys(dataset).forEach(key => {
+                        const valor = dataset[key];
+                        if (typeof valor === 'number' && valor > 0) {
+                            produtos.add(key);
+                        }
+                        else if (typeof valor === 'object' && valor !== null) {
+                            produtos.add(key);
+                        }
+                    });
+                }
+            }
+            return Array.from(produtos);
+        }
+        catch (error) {
+            return [];
+        }
+    }
+    obterProdutosEmpresa(empresaId) {
+        this.logger.warn(`⚠️ Usando fallback de produtos básicos para empresa ${empresaId}`);
+        const produtosBasicos = [
+            'cobranca', 'bolepix', 'pixpay', 'pagamentos', 'webcheckout'
+        ];
+        this.logger.debug(`🔄 Produtos básicos de fallback: ${produtosBasicos.join(', ')}`);
+        return produtosBasicos;
+    }
+    async validarProposta(numeroProposta, empresaId) {
+        try {
+            const produtos = this.obterProdutosEmpresa(empresaId);
+            for (const produto of produtos) {
+                const proposta = this.obterPropostaPorMapeamentoEstatico(empresaId, produto);
+                if (proposta === numeroProposta) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao validar proposta ${numeroProposta}: ${error.message}`);
+            return false;
+        }
+    }
+    getConfiguracaoVigencia() {
+        return {
+            inicial: this.configService.get('PROPOSTA_VIGENCIA_INICIAL', '01/01/2025'),
+            final: this.configService.get('PROPOSTA_VIGENCIA_FINAL', '31/12/2025')
+        };
+    }
+};
+exports.PropostasService = PropostasService;
+exports.PropostasService = PropostasService = PropostasService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, typeof (_b = typeof axios_1.HttpService !== "undefined" && axios_1.HttpService) === "function" ? _b : Object])
+], PropostasService);
 
 
 /***/ }),

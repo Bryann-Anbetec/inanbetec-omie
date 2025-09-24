@@ -16,11 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { ClientSyncService } from './services/client-sync.service';
 import { InanbetecService } from './services/inanbetec-mongo.service';
-import { 
-  CreateClientDto, 
-  SyncClientDto, 
-  ClientWebhookDto 
-} from './dto/client.dto';
+// DTOs de sincronização removidos - apenas consulta ativa
 
 @ApiTags('clientes')
 @Controller('clientes')
@@ -32,47 +28,8 @@ export class ClientsController {
     private readonly inanbetecService: InanbetecService,
   ) {}
 
-  @Post('sincronizar')
-  @ApiOperation({ 
-    summary: 'Sincronizar cliente por CNPJ',
-    description: 'Sincroniza um cliente entre Inanbetec e Omie baseado no CNPJ. Se o cliente existir apenas em uma plataforma, será criado na outra.'
-  })
-  @ApiResponse({ status: 201, description: 'Cliente sincronizado com sucesso' })
-  @ApiResponse({ status: 400, description: 'Erro na sincronização' })
-  async sincronizarCliente(@Body() dto: SyncClientDto) {
-    this.logger.log(`Sincronizando cliente CNPJ: ${dto.documento}`);
-    return this.clientSyncService.sincronizarClientePorCNPJ(dto.documento, dto.origem);
-  }
-
-  @Post('webhook/inanbetec')
-  @ApiOperation({ 
-    summary: 'Webhook para eventos de cliente da Inanbetec',
-    description: 'Recebe webhooks da Inanbetec quando um cliente é criado, atualizado ou excluído'
-  })
-  @ApiResponse({ status: 200, description: 'Webhook processado com sucesso' })
-  async webhookInanbetec(@Body() dto: ClientWebhookDto) {
-    this.logger.log(`Webhook Inanbetec recebido - Evento: ${dto.evento}`);
-    return this.clientSyncService.processarWebhookCliente(
-      dto.evento,
-      dto.cliente,
-      'inanbetec'
-    );
-  }
-
-  @Post('webhook/omie')
-  @ApiOperation({ 
-    summary: 'Webhook para eventos de cliente do Omie',
-    description: 'Recebe webhooks do Omie quando um cliente é criado, atualizado ou excluído'
-  })
-  @ApiResponse({ status: 200, description: 'Webhook processado com sucesso' })
-  async webhookOmie(@Body() dto: ClientWebhookDto) {
-    this.logger.log(`Webhook Omie recebido - Evento: ${dto.evento}`);
-    return this.clientSyncService.processarWebhookCliente(
-      dto.evento,
-      dto.cliente,
-      'omie'
-    );
-  }
+  // SINCRONIZAÇÃO DESABILITADA - Para evitar problemas com base de dados
+  // Use apenas consulta por CNPJ
 
   @Get('buscar/:cnpj')
   @ApiOperation({ 
@@ -128,33 +85,28 @@ export class ClientsController {
     });
   }
 
-  @Post('sincronizacao-manual')
+  @Get('status-sistema')
   @ApiOperation({ 
-    summary: 'Executar sincronização manual',
-    description: 'Executa uma sincronização manual de todos os clientes modificados recentemente'
+    summary: 'Status do sistema de clientes',
+    description: 'Retorna informações sobre o estado atual do sistema de clientes'
   })
-  @ApiResponse({ status: 200, description: 'Sincronização executada com sucesso' })
-  async sincronizacaoManual() {
-    this.logger.log('Executando sincronização manual de clientes');
-    return this.clientSyncService.sincronizacaoAutomatica();
-  }
-
-  @Get('status-sincronizacao')
-  @ApiOperation({ 
-    summary: 'Status da sincronização de clientes',
-    description: 'Retorna informações sobre o status da sincronização automática'
-  })
-  @ApiResponse({ status: 200, description: 'Status da sincronização' })
-  async statusSincronizacao() {
+  @ApiResponse({ status: 200, description: 'Status do sistema' })
+  async statusSistema() {
     return {
-      sincronizacaoAutomatica: 'ativa',
-      proximaExecucao: 'a cada hora',
-      ultimaExecucao: new Date().toISOString(),
-      status: 'funcionando',
-      webhooks: {
-        inanbetec: '/clientes/webhook/inanbetec',
-        omie: '/clientes/webhook/omie'
-      }
+      sincronizacaoAutomatica: 'DESABILITADA',
+      motivo: 'Sistema em modo somente leitura por segurança',
+      operacoesPermitidas: [
+        'Busca de clientes por CNPJ',
+        'Listagem de clientes Inanbetec'
+      ],
+      operacoesDesabilitadas: [
+        'Sincronização manual',
+        'Webhooks de modificação',
+        'Criação de novos clientes',
+        'Atualização de dados'
+      ],
+      dataDesabilitacao: '2024-12-19',
+      status: 'MODO SEGURO ATIVO'
     };
   }
 }

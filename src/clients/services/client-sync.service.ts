@@ -139,6 +139,11 @@ export class ClientSyncService {
     }
   }
 
+  // SINCRONIZAÇÃO AUTOMÁTICA DESABILITADA
+  // Para evitar problemas com clientes, a sincronização automática foi desabilitada
+  // Use apenas o endpoint manual: POST /clientes/sincronizar
+  
+  /*
   @Cron(CronExpression.EVERY_HOUR)
   async sincronizacaoAutomatica() {
     try {
@@ -190,6 +195,7 @@ export class ClientSyncService {
       this.logger.error(`Erro na sincronização automática: ${error.message}`);
     }
   }
+  */
 
   async buscarClienteOmiePorCNPJ(cnpj: string) {
     try {
