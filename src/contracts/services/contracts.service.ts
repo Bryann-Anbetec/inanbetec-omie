@@ -754,7 +754,14 @@ export class ContractsService {
         nDias: 30,
         nDiaFixo: 30
       },
-      departamentos: [],
+      departamentos: [
+        {
+          cCodDep: '5643744987', // Código do departamento "Produtos próprio"
+          cDesDep: '', // Sempre vazio conforme especificação
+          nPerDep: 100, // 100% do valor para este departamento
+          nValDep: valorTotal // Valor total do contrato
+        }
+      ],
       emailCliente: {
         cEnviarBoleto: 'N',
         cEnviarLinkNfse: 'N',

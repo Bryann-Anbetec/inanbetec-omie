@@ -2610,7 +2610,14 @@ let ContractsService = ContractsService_1 = class ContractsService {
                 nDias: 30,
                 nDiaFixo: 30
             },
-            departamentos: [],
+            departamentos: [
+                {
+                    cCodDep: '5643744987',
+                    cDesDep: '',
+                    nPerDep: 100,
+                    nValDep: valorTotal
+                }
+            ],
             emailCliente: {
                 cEnviarBoleto: 'N',
                 cEnviarLinkNfse: 'N',
