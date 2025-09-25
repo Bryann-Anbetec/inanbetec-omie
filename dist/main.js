@@ -1382,15 +1382,23 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var ConfiguracaoService_1;
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ConfiguracaoService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const mongodb_1 = __webpack_require__(/*! mongodb */ "mongodb");
+const axios_1 = __webpack_require__(/*! axios */ "axios");
 let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
-    constructor(configService) {
+    constructor(configService, mongoConnection) {
         this.configService = configService;
+        this.mongoConnection = mongoConnection;
         this.logger = new common_1.Logger(ConfiguracaoService_1.name);
     }
     async obterEmpresasAtivas() {
@@ -1425,10 +1433,121 @@ let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
     }
     async obterConfiguracaoEmpresa(empresaId) {
         try {
+            this.logger.log(`🔍 Obtendo configuração dinâmica para empresa ${empresaId}`);
+            const empresaInAnbetec = await this.buscarEmpresaInAnbetec(empresaId);
+            if (!empresaInAnbetec) {
+                this.logger.warn(`⚠️ Empresa ${empresaId} não encontrada no banco InAnbetec, usando fallback`);
+                return await this.obterConfiguracaoEmpresaFallback(empresaId);
+            }
+            this.logger.log(`✅ Empresa encontrada: ${empresaInAnbetec.nome} - CNPJ: ${empresaInAnbetec.cnpj}`);
+            const codigoClienteOmie = await this.buscarCodigoClienteOmie(empresaInAnbetec.cnpj);
+            if (!codigoClienteOmie) {
+                this.logger.warn(`⚠️ Cliente CNPJ ${empresaInAnbetec.cnpj} não encontrado no Omie, usando fallback`);
+                return await this.obterConfiguracaoEmpresaFallback(empresaId);
+            }
+            this.logger.log(`✅ Cliente Omie encontrado: ${codigoClienteOmie}`);
+            return {
+                empresaId: empresaId,
+                nomeEmpresa: empresaInAnbetec.nome,
+                cnpj: empresaInAnbetec.cnpj,
+                codigoClienteOmie: codigoClienteOmie,
+                ativo: empresaInAnbetec.status || true,
+                configuracao: {
+                    tipoFaturamento: '01',
+                    diaFaturamento: 30,
+                    vigenciaInicial: '01/01/2025',
+                    vigenciaFinal: '31/12/2025',
+                    codigosServico: {
+                        'cobranca': {
+                            codServico: 1001,
+                            codLC116: '3.05',
+                            natOperacao: '01',
+                            aliqISS: 5.0
+                        },
+                        'bolepix': {
+                            codServico: 1003,
+                            codLC116: '3.05',
+                            natOperacao: '01',
+                            aliqISS: 5.0
+                        },
+                        'pagamentos': {
+                            codServico: 1002,
+                            codLC116: '3.05',
+                            natOperacao: '01',
+                            aliqISS: 5.0
+                        },
+                        'pixpay': {
+                            codServico: 1004,
+                            codLC116: '3.05',
+                            natOperacao: '01',
+                            aliqISS: 5.0
+                        },
+                        'webcheckout': {
+                            codServico: 1005,
+                            codLC116: '3.05',
+                            natOperacao: '01',
+                            aliqISS: 5.0
+                        }
+                    }
+                }
+            };
+        }
+        catch (error) {
+            this.logger.error(`❌ Erro ao obter configuração da empresa ${empresaId}: ${error.message}`);
+            this.logger.warn(`⚠️ Usando configuração de fallback para empresa ${empresaId}`);
+            return await this.obterConfiguracaoEmpresaFallback(empresaId);
+        }
+    }
+    async buscarEmpresaInAnbetec(empresaId) {
+        try {
+            const collection = this.mongoConnection.collection('empresas');
+            const empresa = await collection.findOne({
+                $or: [
+                    { id: empresaId },
+                    { empresaId: empresaId },
+                    { _id: new mongodb_1.ObjectId(empresaId.toString().padStart(24, '0')) }
+                ]
+            });
+            return empresa;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao buscar empresa ${empresaId} no MongoDB: ${error.message}`);
+            return null;
+        }
+    }
+    async buscarCodigoClienteOmie(cnpj) {
+        try {
+            const omieAppKey = this.configService.get('OMIE_APP_KEY');
+            const omieAppSecret = this.configService.get('OMIE_APP_SECRET');
+            if (!omieAppKey || !omieAppSecret) {
+                throw new Error('Credenciais do Omie não configuradas');
+            }
+            const payload = {
+                call: 'ConsultarCliente',
+                app_key: omieAppKey,
+                app_secret: omieAppSecret,
+                param: [{
+                        cnpj_cpf: cnpj.replace(/[^\d]/g, '')
+                    }]
+            };
+            const response = await axios_1.default.post('https://app.omie.com.br/api/v1/geral/clientes/', payload);
+            if (response.data && response.data.codigo_cliente_omie) {
+                return response.data.codigo_cliente_omie;
+            }
+            return null;
+        }
+        catch (error) {
+            this.logger.error(`Erro ao consultar cliente no Omie: ${error.message}`);
+            return null;
+        }
+    }
+    async obterConfiguracaoEmpresaFallback(empresaId) {
+        try {
             const configuracoesPadrao = {
                 51: {
                     empresaId: 51,
                     nomeEmpresa: 'Empresa 51 - InAnbetec',
+                    cnpj: '00.000.000/0001-51',
                     codigoClienteOmie: 2370765,
                     ativo: true,
                     configuracao: {
@@ -1467,6 +1586,7 @@ let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
                 66: {
                     empresaId: 66,
                     nomeEmpresa: 'Empresa 66 - InAnbetec',
+                    cnpj: '00.000.000/0001-66',
                     codigoClienteOmie: 1234567,
                     ativo: true,
                     configuracao: {
@@ -1493,7 +1613,8 @@ let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
                 258: {
                     empresaId: 258,
                     nomeEmpresa: 'Empresa 258 - InAnbetec',
-                    codigoClienteOmie: 2370765,
+                    cnpj: '02.678.694/0002-27',
+                    codigoClienteOmie: 6488507558,
                     ativo: true,
                     configuracao: {
                         tipoFaturamento: '01',
@@ -1616,7 +1737,8 @@ let ConfiguracaoService = ConfiguracaoService_1 = class ConfiguracaoService {
 exports.ConfiguracaoService = ConfiguracaoService;
 exports.ConfiguracaoService = ConfiguracaoService = ConfiguracaoService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+    __param(1, (0, mongoose_1.InjectConnection)()),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, typeof (_b = typeof mongoose_2.Connection !== "undefined" && mongoose_2.Connection) === "function" ? _b : Object])
 ], ConfiguracaoService);
 
 
@@ -2607,6 +2729,7 @@ let ContractsService = ContractsService_1 = class ContractsService {
         return {
             cabecalho: {
                 cCodIntCtr: cCodIntCtr,
+                cNumCtr: `CTR-${anoCompacto}${mes}-${empresaId}`,
                 cCodSit: '10',
                 cTipoFat: configEmpresa.configuracao.tipoFaturamento,
                 dVigInicial: configEmpresa.configuracao.vigenciaInicial,
@@ -2620,6 +2743,8 @@ let ContractsService = ContractsService_1 = class ContractsService {
                     itemCabecalho: {
                         codIntItem: '1',
                         codLC116: '3.05',
+                        codServMunic: '620230000',
+                        codServico: 2360610897,
                         natOperacao: '01',
                         quant: 1,
                         seq: 1,
@@ -2631,13 +2756,36 @@ let ContractsService = ContractsService_1 = class ContractsService {
                         descrCompleta: descricaoCompleta
                     },
                     itemImpostos: {
-                        aliqISS: 0,
-                        retISS: 'N'
+                        aliqISS: 2,
+                        retISS: 'N',
+                        retINSS: 'N',
+                        retIR: 'S',
+                        retPIS: 'S',
+                        retCOFINS: 'S',
+                        retCSLL: 'S'
                     }
                 }
             ],
             observacoes: {
                 cObsContrato: `Consolidação automática InAnbetec. Competência ${mes}/${ano}.`
+            },
+            infAdic: {
+                cCodCateg: '1.01.01',
+                nCodCC: 2404200141
+            },
+            vencTextos: {
+                cAdContrato: 'N',
+                cAdPeriodo: 'S',
+                cAdVenc: 'S',
+                cAntecipar: 'S',
+                cCodPerRef: '001',
+                cDiaFim: 1,
+                cDiaIni: 1,
+                cPostergar: 'N',
+                cProxMes: '',
+                cTpVenc: '002',
+                nDias: 30,
+                nDiaFixo: 30
             }
         };
     }
@@ -2834,7 +2982,6 @@ let ContractsService = ContractsService_1 = class ContractsService {
             infAdic: contractData.infAdic || {
                 cCidPrestServ: '',
                 cCodCateg: '',
-                nCodCC: 0,
                 nCodProj: 0,
                 nCodVend: 0
             },
@@ -4119,6 +4266,16 @@ module.exports = require("@nestjs/swagger");
 
 /***/ }),
 
+/***/ "axios":
+/*!************************!*\
+  !*** external "axios" ***!
+  \************************/
+/***/ ((module) => {
+
+module.exports = require("axios");
+
+/***/ }),
+
 /***/ "class-validator":
 /*!**********************************!*\
   !*** external "class-validator" ***!
@@ -4126,6 +4283,16 @@ module.exports = require("@nestjs/swagger");
 /***/ ((module) => {
 
 module.exports = require("class-validator");
+
+/***/ }),
+
+/***/ "mongodb":
+/*!**************************!*\
+  !*** external "mongodb" ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = require("mongodb");
 
 /***/ }),
 

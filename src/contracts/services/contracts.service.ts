@@ -655,6 +655,7 @@ export class ContractsService {
     return {
       cabecalho: {
         cCodIntCtr: cCodIntCtr,
+        cNumCtr: `CTR-${anoCompacto}${mes}-${empresaId}`, // Número do contrato obrigatório
         cCodSit: '10',
         cTipoFat: configEmpresa.configuracao.tipoFaturamento,
         dVigInicial: configEmpresa.configuracao.vigenciaInicial,
@@ -666,26 +667,51 @@ export class ContractsService {
       itensContrato: [
         {
           itemCabecalho: {
-            codIntItem: '1',
-            codLC116: '3.05', // Conforme especificação
-            natOperacao: '01',
-            quant: 1,
-            seq: 1,
-            valorTotal: valorTotal,
-            valorUnit: valorTotal,
-            cNaoGerarFinanceiro: 'N'
-          },
+          codIntItem: '1',
+          codLC116: '3.05', // Conforme especificação
+          codServMunic: '620230000', // Código do serviço municipal
+          codServico: 2360610897, // Código do serviço padrão
+          natOperacao: '01',
+          quant: 1,
+          seq: 1,
+          valorTotal: valorTotal,
+          valorUnit: valorTotal,
+          cNaoGerarFinanceiro: 'N'
+        },
           itemDescrServ: {
             descrCompleta: descricaoCompleta
           },
           itemImpostos: {
-            aliqISS: 0,
-            retISS: 'N'
+            aliqISS: 2,
+            retISS: 'N',
+            retINSS: 'N',
+            retIR: 'S',
+            retPIS: 'S',
+            retCOFINS: 'S',
+            retCSLL: 'S'
           }
         }
       ],
       observacoes: {
         cObsContrato: `Consolidação automática InAnbetec. Competência ${mes}/${ano}.`
+      },
+      infAdic: {
+        cCodCateg: '1.01.01',
+        nCodCC: 2404200141
+      },
+      vencTextos: {
+        cAdContrato: 'N',
+        cAdPeriodo: 'S',
+        cAdVenc: 'S',
+        cAntecipar: 'S',
+        cCodPerRef: '001',
+        cDiaFim: 1,
+        cDiaIni: 1,
+        cPostergar: 'N',
+        cProxMes: '',
+        cTpVenc: '002',
+        nDias: 30,
+        nDiaFixo: 30
       }
     };
   }
@@ -920,7 +946,6 @@ export class ContractsService {
       infAdic: contractData.infAdic || {
         cCidPrestServ: '',
         cCodCateg: '',
-        nCodCC: 0,
         nCodProj: 0,
         nCodVend: 0
       },
