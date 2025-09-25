@@ -905,13 +905,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var ContractsController_1;
-var _a, _b, _c;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContractsController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const contracts_service_1 = __webpack_require__(/*! ./services/contracts.service */ "./src/contracts/services/contracts.service.ts");
-const contract_dto_1 = __webpack_require__(/*! ./dto/contract.dto */ "./src/contracts/dto/contract.dto.ts");
 let ContractsController = ContractsController_1 = class ContractsController {
     constructor(contractsService) {
         this.contractsService = contractsService;
@@ -921,36 +920,6 @@ let ContractsController = ContractsController_1 = class ContractsController {
         this.logger.log(`🧪 Teste de criação de contrato - Empresa: ${empresaId}, Competência: ${competencia}`);
         const enviarParaOmie = enviarOmie === 'true';
         return this.contractsService.testarCriacaoContrato(empresaId, competencia, enviarParaOmie);
-    }
-    async createContractFromVolumetria(dto) {
-        this.logger.log(`Criando contrato a partir da volumetria para empresa: ${dto.empresaId}`);
-        return this.contractsService.createContractFromVolumetria(dto.empresaId, dto.dataInicial, dto.dataFinal, dto.dadosEmpresa);
-    }
-    async listContracts(query) {
-        this.logger.log(`Listando contratos - Página: ${query.pagina}`);
-        return this.contractsService.listContracts(query);
-    }
-    async getVolumetriaData(empresaId, dataInicial, dataFinal) {
-        this.logger.log(`Consultando volumetria para empresa: ${empresaId}`);
-        return this.contractsService.getVolumetriaData(empresaId, dataInicial, dataFinal);
-    }
-    async getContract(id) {
-        this.logger.log(`Buscando contrato: ${id}`);
-        return this.contractsService.getContract({ nCodCtr: id });
-    }
-    async updateContract(id, contractData) {
-        this.logger.log(`Atualizando contrato: ${id}`);
-        return this.contractsService.updateContract({
-            ...contractData,
-            cabecalho: {
-                ...contractData.cabecalho,
-                nCodCtr: id
-            }
-        });
-    }
-    async deleteContractItem(contractId, itemId) {
-        this.logger.log(`Excluindo item ${itemId} do contrato ${contractId}`);
-        return this.contractsService.deleteContractItem({ nCodCtr: contractId }, [{ codItem: itemId }]);
     }
     async processarConsolidacaoMensal(dto) {
         this.logger.log(`=== PROCESSAMENTO CONSOLIDAÇÃO MENSAL ===`);
@@ -981,96 +950,6 @@ __decorate([
     __metadata("design:paramtypes", [Number, String, String]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "testarCriacaoContrato", null);
-__decorate([
-    (0, common_1.Post)('volumetria'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Criar contrato baseado em volumetria',
-        description: 'Cria um contrato único no Omie baseado nos dados de volumetria da Inanbetec'
-    }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Contrato criado com sucesso' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Erro na criação do contrato' }),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof contract_dto_1.CreateContractFromVolumetriaDto !== "undefined" && contract_dto_1.CreateContractFromVolumetriaDto) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "createContractFromVolumetria", null);
-__decorate([
-    (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Listar contratos',
-        description: 'Lista contratos do Omie com paginação'
-    }),
-    (0, swagger_1.ApiQuery)({ name: 'pagina', required: false, description: 'Número da página' }),
-    (0, swagger_1.ApiQuery)({ name: 'registros_por_pagina', required: false, description: 'Registros por página' }),
-    (0, swagger_1.ApiQuery)({ name: 'apenas_importado_api', required: false, description: 'Apenas contratos via API' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de contratos retornada com sucesso' }),
-    __param(0, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof contract_dto_1.ListContractsDto !== "undefined" && contract_dto_1.ListContractsDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "listContracts", null);
-__decorate([
-    (0, common_1.Get)('volumetria/:empresaId'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Consultar dados de volumetria',
-        description: 'Consulta dados de volumetria para análise sem criar contrato'
-    }),
-    (0, swagger_1.ApiParam)({ name: 'empresaId', description: 'ID da empresa' }),
-    (0, swagger_1.ApiQuery)({ name: 'dataInicial', required: true, description: 'Data inicial' }),
-    (0, swagger_1.ApiQuery)({ name: 'dataFinal', required: true, description: 'Data final' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Dados de volumetria retornados com sucesso' }),
-    __param(0, (0, common_1.Param)('empresaId')),
-    __param(1, (0, common_1.Query)('dataInicial')),
-    __param(2, (0, common_1.Query)('dataFinal')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "getVolumetriaData", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Buscar contrato por ID',
-        description: 'Busca um contrato específico no Omie'
-    }),
-    (0, swagger_1.ApiParam)({ name: 'id', description: 'ID do contrato' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Contrato encontrado' }),
-    (0, swagger_1.ApiResponse)({ status: 404, description: 'Contrato não encontrado' }),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "getContract", null);
-__decorate([
-    (0, common_1.Put)(':id'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Atualizar contrato',
-        description: 'Atualiza um contrato existente no Omie'
-    }),
-    (0, swagger_1.ApiParam)({ name: 'id', description: 'ID do contrato' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Contrato atualizado com sucesso' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Erro na atualização do contrato' }),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "updateContract", null);
-__decorate([
-    (0, common_1.Delete)(':contractId/itens/:itemId'),
-    (0, swagger_1.ApiOperation)({
-        summary: 'Excluir item do contrato',
-        description: 'Remove um item específico de um contrato'
-    }),
-    (0, swagger_1.ApiParam)({ name: 'contractId', description: 'ID do contrato' }),
-    (0, swagger_1.ApiParam)({ name: 'itemId', description: 'ID do item' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Item excluído com sucesso' }),
-    (0, swagger_1.ApiResponse)({ status: 400, description: 'Erro na exclusão do item' }),
-    __param(0, (0, common_1.Param)('contractId', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Param)('itemId', common_1.ParseIntPipe)),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
-    __metadata("design:returntype", Promise)
-], ContractsController.prototype, "deleteContractItem", null);
 __decorate([
     (0, common_1.Post)('consolidacao/processar'),
     (0, swagger_1.ApiOperation)({
@@ -1165,99 +1044,6 @@ exports.ContractsModule = ContractsModule = __decorate([
         ],
     })
 ], ContractsModule);
-
-
-/***/ }),
-
-/***/ "./src/contracts/dto/contract.dto.ts":
-/*!*******************************************!*\
-  !*** ./src/contracts/dto/contract.dto.ts ***!
-  \*******************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ListContractsDto = exports.CreateContractFromVolumetriaDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
-class CreateContractFromVolumetriaDto {
-}
-exports.CreateContractFromVolumetriaDto = CreateContractFromVolumetriaDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'ID da empresa',
-        example: '123456'
-    }),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateContractFromVolumetriaDto.prototype, "empresaId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Data inicial para consulta',
-        example: '2025-01-01'
-    }),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateContractFromVolumetriaDto.prototype, "dataInicial", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Data final para consulta',
-        example: '2025-12-31'
-    }),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateContractFromVolumetriaDto.prototype, "dataFinal", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Dados adicionais da empresa'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Object)
-], CreateContractFromVolumetriaDto.prototype, "dadosEmpresa", void 0);
-class ListContractsDto {
-    constructor() {
-        this.pagina = 1;
-        this.registros_por_pagina = 50;
-        this.apenas_importado_api = 'N';
-    }
-}
-exports.ListContractsDto = ListContractsDto;
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Número da página',
-        example: 1,
-        default: 1
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], ListContractsDto.prototype, "pagina", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Registros por página',
-        example: 50,
-        default: 50
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], ListContractsDto.prototype, "registros_por_pagina", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        description: 'Apenas contratos importados via API',
-        example: 'N',
-        default: 'N'
-    }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], ListContractsDto.prototype, "apenas_importado_api", void 0);
 
 
 /***/ }),
@@ -2726,10 +2512,10 @@ let ContractsService = ContractsService_1 = class ContractsService {
         const descricaoProdutos = produtos.map(p => p.nome).join(', ');
         const descricaoCompleta = `Serviços do período ${mes}/${ano} — Proposta ${numeroProposta} — Produtos: ${descricaoProdutos}`;
         this.logger.log(`📋 Código integração: ${cCodIntCtr} (${cCodIntCtr.length} caracteres)`);
-        return {
+        const contratoModel = {
             cabecalho: {
                 cCodIntCtr: cCodIntCtr,
-                cNumCtr: `CTR-${anoCompacto}${mes}-${empresaId}`,
+                cNumCtr: numeroProposta,
                 cCodSit: '10',
                 cTipoFat: configEmpresa.configuracao.tipoFaturamento,
                 dVigInicial: configEmpresa.configuracao.vigenciaInicial,
@@ -2738,34 +2524,71 @@ let ContractsService = ContractsService_1 = class ContractsService {
                 nDiaFat: configEmpresa.configuracao.diaFaturamento,
                 nValTotMes: valorTotal
             },
-            itensContrato: [
-                {
+            itensContrato: produtos.filter(produto => produto.valor > 0).map((produto, index) => {
+                const quantidade = produto.quantidade || 1;
+                const valorTotalItem = parseFloat(produto.valor) || 0;
+                const valorUnitario = quantidade > 0 ? Math.round((valorTotalItem / quantidade) * 100) / 100 : valorTotalItem;
+                this.logger.log(`🔍 Item ${index + 1}: ${produto.nome} - Qtd: ${quantidade}, ValorTotal: ${valorTotalItem}, ValorUnit: ${valorUnitario}`);
+                if (valorTotalItem === 0 || isNaN(valorTotalItem)) {
+                    this.logger.error(`⚠️ PROBLEMA: Produto ${produto.nome} tem valorTotalItem inválido: ${valorTotalItem}`);
+                }
+                return {
                     itemCabecalho: {
-                        codIntItem: '1',
-                        codLC116: '3.05',
+                        aliqDesconto: 0,
+                        cCodCategItem: '1.01.03',
+                        cNaoGerarFinanceiro: 'N',
+                        cTpDesconto: '',
+                        codIntItem: (index + 1).toString(),
+                        codLC116: '1.06',
+                        codNBS: '',
                         codServMunic: '620230000',
                         codServico: 2360610897,
                         natOperacao: '01',
-                        quant: 1,
-                        seq: 1,
-                        valorTotal: valorTotal,
-                        valorUnit: valorTotal,
-                        cNaoGerarFinanceiro: 'N'
+                        quant: quantidade,
+                        seq: index + 1,
+                        valorAcrescimo: 0,
+                        valorDed: 0,
+                        valorDesconto: 0,
+                        valorOutrasRetencoes: 0,
+                        valorTotal: valorTotalItem,
+                        valorUnit: valorUnitario
                     },
                     itemDescrServ: {
-                        descrCompleta: descricaoCompleta
+                        descrCompleta: produto.nome.toUpperCase()
                     },
                     itemImpostos: {
+                        aliqCOFINS: 3,
+                        aliqCSLL: 1,
+                        aliqINSS: 0,
+                        aliqIR: 1.5,
                         aliqISS: 2,
-                        retISS: 'N',
-                        retINSS: 'N',
-                        retIR: 'S',
-                        retPIS: 'S',
+                        aliqPIS: 0.65,
+                        lDeduzISS: false,
+                        redBaseCOFINS: 0,
+                        redBaseINSS: 0,
+                        redBasePIS: 0,
                         retCOFINS: 'S',
-                        retCSLL: 'S'
+                        retCSLL: 'S',
+                        retINSS: 'N',
+                        retIR: 'N',
+                        retISS: 'N',
+                        retPIS: 'S',
+                        valorCOFINS: Math.round(valorTotalItem * 0.03 * 100) / 100,
+                        valorCSLL: Math.round(valorTotalItem * 0.01 * 100) / 100,
+                        valorINSS: 0,
+                        valorIR: Math.round(valorTotalItem * 0.015 * 100) / 100,
+                        valorISS: Math.round(valorTotalItem * 0.02 * 100) / 100,
+                        valorPIS: Math.round(valorTotalItem * 0.0065 * 100) / 100
+                    },
+                    itemLeiTranspImp: {
+                        aliMunicipal: 0,
+                        aliqEstadual: 0,
+                        aliqFederal: 0,
+                        chave: '',
+                        fonte: ''
                     }
-                }
-            ],
+                };
+            }),
             observacoes: {
                 cObsContrato: `Consolidação automática InAnbetec. Competência ${mes}/${ano}.`
             },
@@ -2786,8 +2609,23 @@ let ContractsService = ContractsService_1 = class ContractsService {
                 cTpVenc: '002',
                 nDias: 30,
                 nDiaFixo: 30
+            },
+            departamentos: [],
+            emailCliente: {
+                cEnviarBoleto: 'N',
+                cEnviarLinkNfse: 'N',
+                cEnviarRecibo: 'N',
+                cUtilizarEmails: ''
             }
         };
+        this.logger.log(`📤 JSON completo que será enviado para Omie:`);
+        this.logger.log(JSON.stringify(contratoModel, null, 2));
+        contratoModel.itensContrato.forEach((item, index) => {
+            if (!item.itemCabecalho.valorUnit || item.itemCabecalho.valorUnit === 0) {
+                this.logger.error(`🚨 ERRO: Item ${index + 1} tem valorUnit inválido: ${item.itemCabecalho.valorUnit}`);
+            }
+        });
+        return contratoModel;
     }
     calcularPeriodoCompetencia(competencia) {
         const [ano, mes] = competencia.split('-');
@@ -2795,212 +2633,6 @@ let ContractsService = ContractsService_1 = class ContractsService {
         return {
             dataInicial: `${ano}-${mes}-01`,
             dataFinal: `${ano}-${mes}-${ultimoDia.toString().padStart(2, '0')}`
-        };
-    }
-    async createContractFromVolumetria(empresaId, dataInicial, dataFinal, dadosEmpresa = {}) {
-        try {
-            this.logger.log('Iniciando criação de contrato a partir da volumetria');
-            const volumetriaData = await this.volumetriaService.consultarVolumetria({
-                dataInicial,
-                dataFinal,
-                empresas: empresaId
-            });
-            this.logger.log(`Dados de volumetria recebidos: ${JSON.stringify(volumetriaData)}`);
-            if (!volumetriaData || volumetriaData.length === 0) {
-                this.logger.warn('Nenhum dado de volumetria encontrado para o período informado');
-                return {
-                    success: false,
-                    error: 'Nenhum dado de volumetria encontrado para o período informado'
-                };
-            }
-            const servicosEmpresa = await this.volumetriaService.buscarServicosPorEmpresa(empresaId);
-            const dadosContrato = this.volumetriaService.mapearParaContratoOmie(volumetriaData[0], dadosEmpresa);
-            this.logger.log(`Dados do contrato mapeado: ${JSON.stringify(dadosContrato)}`);
-            const contractModel = this.createContractModel(dadosContrato);
-            this.logger.log(`Modelo do contrato Omie: ${JSON.stringify(contractModel)}`);
-            const response = await this.omieService.incluirContrato(contractModel);
-            this.logger.log(`Resposta da criação do contrato Omie: ${JSON.stringify(response)}`);
-            return {
-                success: response.cCodStatus === '0',
-                contractId: response.nCodCtr,
-                integrationCode: response.cCodIntCtr,
-                message: response.cDescStatus,
-                volumetriaData: volumetriaData[0],
-                servicosEmpresa: servicosEmpresa,
-                contractData: dadosContrato
-            };
-        }
-        catch (error) {
-            this.logger.error(`Erro na criação do contrato a partir da volumetria: ${error.message}`);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async getVolumetriaData(empresaId, dataInicial, dataFinal) {
-        try {
-            const volumetriaData = await this.volumetriaService.consultarVolumetria({
-                dataInicial,
-                dataFinal,
-                empresas: empresaId
-            });
-            const servicosEmpresa = await this.volumetriaService.buscarServicosPorEmpresa(empresaId);
-            return {
-                success: true,
-                volumetria: volumetriaData,
-                servicos: servicosEmpresa,
-                contratoMapeado: volumetriaData && volumetriaData.length > 0 ?
-                    this.volumetriaService.mapearParaContratoOmie(volumetriaData[0]) : null
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async createContract(contractData) {
-        try {
-            const contractModel = this.createContractModel(contractData);
-            const response = await this.omieService.incluirContrato(contractModel);
-            return {
-                success: response.cCodStatus === '0',
-                contractId: response.nCodCtr,
-                integrationCode: response.cCodIntCtr,
-                message: response.cDescStatus
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async getContract(contractKey) {
-        try {
-            const response = await this.omieService.consultarContrato(contractKey);
-            return {
-                success: !!response.contratoCadastro,
-                contract: response.contratoCadastro || null
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async listContracts(listParams = {}) {
-        try {
-            const listRequest = this.createListRequest(listParams);
-            const response = await this.omieService.listarContratos(listRequest);
-            return {
-                success: true,
-                pagina: response.pagina,
-                total_de_paginas: response.total_de_paginas,
-                registros: response.registros,
-                total_de_registros: response.total_de_registros,
-                contratos: response.contratoCadastro || []
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async updateContract(contractData) {
-        try {
-            const contractModel = this.createContractModel(contractData);
-            const response = await this.omieService.alterarContrato(contractModel);
-            return {
-                success: response.cCodStatus === '0',
-                contractId: response.nCodCtr,
-                integrationCode: response.cCodIntCtr,
-                message: response.cDescStatus
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async upsertContract(contractData) {
-        try {
-            const contractModel = this.createContractModel(contractData);
-            const response = await this.omieService.upsertContrato(contractModel);
-            return {
-                success: response.cCodStatus === '0',
-                contractId: response.nCodCtr,
-                integrationCode: response.cCodIntCtr,
-                message: response.cDescStatus
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    async deleteContractItem(contractKey, itemsToDelete) {
-        try {
-            const response = await this.omieService.excluirItem(contractKey, itemsToDelete);
-            return {
-                success: response.cCodStatus === '0',
-                message: response.cDescStatus
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-    createContractModel(contractData) {
-        return {
-            cabecalho: {
-                cCodIntCtr: contractData.cCodIntCtr || '',
-                cNumCtr: contractData.cNumCtr || '',
-                nCodCli: contractData.nCodCli || 0,
-                cCodSit: contractData.cCodSit || '10',
-                dVigInicial: contractData.dVigInicial || '',
-                dVigFinal: contractData.dVigFinal || '',
-                nDiaFat: contractData.nDiaFat || 0,
-                nValTotMes: contractData.nValTotMes || 0,
-                cTipoFat: contractData.cTipoFat || '01'
-            },
-            departamentos: [],
-            infAdic: contractData.infAdic || {
-                cCidPrestServ: '',
-                cCodCateg: '',
-                nCodProj: 0,
-                nCodVend: 0
-            },
-            vencTextos: contractData.vencTextos || {
-                cTpVenc: '001',
-                nDias: 5,
-                cProxMes: 'N',
-                cAdContrato: 'N'
-            },
-            itensContrato: contractData.itensContrato || [],
-            emailCliente: {
-                cEnviarBoleto: 'N',
-                cEnviarLinkNfse: 'N',
-                cEnviarRecibo: 'N',
-                cUtilizarEmails: ''
-            },
-            observacoes: {
-                cObsContrato: ''
-            }
         };
     }
     createListRequest(params) {
@@ -4273,16 +3905,6 @@ module.exports = require("@nestjs/swagger");
 /***/ ((module) => {
 
 module.exports = require("axios");
-
-/***/ }),
-
-/***/ "class-validator":
-/*!**********************************!*\
-  !*** external "class-validator" ***!
-  \**********************************/
-/***/ ((module) => {
-
-module.exports = require("class-validator");
 
 /***/ }),
 

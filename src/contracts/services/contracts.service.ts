@@ -652,10 +652,10 @@ export class ContractsService {
     
     this.logger.log(`📋 Código integração: ${cCodIntCtr} (${cCodIntCtr.length} caracteres)`);
     
-    return {
+    const contratoModel = {
       cabecalho: {
         cCodIntCtr: cCodIntCtr,
-        cNumCtr: `CTR-${anoCompacto}${mes}-${empresaId}`, // Número do contrato obrigatório
+        cNumCtr: numeroProposta, // Número do contrato obrigatório
         cCodSit: '10',
         cTipoFat: configEmpresa.configuracao.tipoFaturamento,
         dVigInicial: configEmpresa.configuracao.vigenciaInicial,
@@ -664,34 +664,75 @@ export class ContractsService {
         nDiaFat: configEmpresa.configuracao.diaFaturamento,
         nValTotMes: valorTotal
       },
-      itensContrato: [
-        {
+      itensContrato: produtos.filter(produto => produto.valor > 0).map((produto, index) => {
+        const quantidade = produto.quantidade || 1;
+        const valorTotalItem = parseFloat(produto.valor) || 0; // Este já é o valor total do produto
+        const valorUnitario = quantidade > 0 ? Math.round((valorTotalItem / quantidade) * 100) / 100 : valorTotalItem; // Calcular unitário
+        
+        // Log detalhado para debug
+        this.logger.log(`🔍 Item ${index + 1}: ${produto.nome} - Qtd: ${quantidade}, ValorTotal: ${valorTotalItem}, ValorUnit: ${valorUnitario}`);
+        
+        if (valorTotalItem === 0 || isNaN(valorTotalItem)) {
+          this.logger.error(`⚠️ PROBLEMA: Produto ${produto.nome} tem valorTotalItem inválido: ${valorTotalItem}`);
+        }
+        
+        return {
           itemCabecalho: {
-          codIntItem: '1',
-          codLC116: '3.05', // Conforme especificação
-          codServMunic: '620230000', // Código do serviço municipal
-          codServico: 2360610897, // Código do serviço padrão
-          natOperacao: '01',
-          quant: 1,
-          seq: 1,
-          valorTotal: valorTotal,
-          valorUnit: valorTotal,
-          cNaoGerarFinanceiro: 'N'
-        },
+            aliqDesconto: 0,
+            cCodCategItem: '1.01.03',
+            cNaoGerarFinanceiro: 'N',
+            cTpDesconto: '',
+            codIntItem: (index + 1).toString(),
+            codLC116: '1.06',
+            codNBS: '',
+            codServMunic: '620230000',
+            codServico: 2360610897,
+            natOperacao: '01',
+            quant: quantidade,
+            seq: index + 1,
+            valorAcrescimo: 0,
+            valorDed: 0,
+            valorDesconto: 0,
+            valorOutrasRetencoes: 0,
+            valorTotal: valorTotalItem, // Valor total deste item específico
+            valorUnit: valorUnitario // Valor unitário do produto - CAMPO OBRIGATÓRIO
+          },
           itemDescrServ: {
-            descrCompleta: descricaoCompleta
+            descrCompleta: produto.nome.toUpperCase()
           },
           itemImpostos: {
+            aliqCOFINS: 3,
+            aliqCSLL: 1,
+            aliqINSS: 0,
+            aliqIR: 1.5,
             aliqISS: 2,
-            retISS: 'N',
-            retINSS: 'N',
-            retIR: 'S',
-            retPIS: 'S',
+            aliqPIS: 0.65,
+            lDeduzISS: false,
+            redBaseCOFINS: 0,
+            redBaseINSS: 0,
+            redBasePIS: 0,
             retCOFINS: 'S',
-            retCSLL: 'S'
+            retCSLL: 'S',
+            retINSS: 'N',
+            retIR: 'N',
+            retISS: 'N',
+            retPIS: 'S',
+            valorCOFINS: Math.round(valorTotalItem * 0.03 * 100) / 100,
+            valorCSLL: Math.round(valorTotalItem * 0.01 * 100) / 100,
+            valorINSS: 0,
+            valorIR: Math.round(valorTotalItem * 0.015 * 100) / 100,
+            valorISS: Math.round(valorTotalItem * 0.02 * 100) / 100,
+            valorPIS: Math.round(valorTotalItem * 0.0065 * 100) / 100
+          },
+          itemLeiTranspImp: {
+            aliMunicipal: 0,
+            aliqEstadual: 0,
+            aliqFederal: 0,
+            chave: '',
+            fonte: ''
           }
-        }
-      ],
+        };
+      }),
       observacoes: {
         cObsContrato: `Consolidação automática InAnbetec. Competência ${mes}/${ano}.`
       },
@@ -712,8 +753,28 @@ export class ContractsService {
         cTpVenc: '002',
         nDias: 30,
         nDiaFixo: 30
+      },
+      departamentos: [],
+      emailCliente: {
+        cEnviarBoleto: 'N',
+        cEnviarLinkNfse: 'N',
+        cEnviarRecibo: 'N',
+        cUtilizarEmails: ''
       }
     };
+    
+    // Log completo do modelo que será enviado para debug
+    this.logger.log(`📤 JSON completo que será enviado para Omie:`);
+    this.logger.log(JSON.stringify(contratoModel, null, 2));
+    
+    // Validação extra: verificar se todos os itens têm valorUnit válido
+    contratoModel.itensContrato.forEach((item, index) => {
+      if (!item.itemCabecalho.valorUnit || item.itemCabecalho.valorUnit === 0) {
+        this.logger.error(`🚨 ERRO: Item ${index + 1} tem valorUnit inválido: ${item.itemCabecalho.valorUnit}`);
+      }
+    });
+    
+    return contratoModel;
   }
 
   // Métodos auxiliares
@@ -729,244 +790,8 @@ export class ContractsService {
   }
 
   // ============================================
-  // MÉTODOS EXISTENTES MANTIDOS PARA COMPATIBILIDADE
+  // MÉTODOS AUXILIARES
   // ============================================
-
-  async createContractFromVolumetria(
-    empresaId: string,
-    dataInicial: string,
-    dataFinal: string,
-    dadosEmpresa: any = {}
-  ) {
-    try {
-      this.logger.log('Iniciando criação de contrato a partir da volumetria');
-      
-      // 1. Buscar dados da volumetria
-      const volumetriaData = await this.volumetriaService.consultarVolumetria({
-        dataInicial,
-        dataFinal,
-        empresas: empresaId
-      });
-      
-      this.logger.log(`Dados de volumetria recebidos: ${JSON.stringify(volumetriaData)}`);
-      
-      if (!volumetriaData || volumetriaData.length === 0) {
-        this.logger.warn('Nenhum dado de volumetria encontrado para o período informado');
-        return {
-          success: false,
-          error: 'Nenhum dado de volumetria encontrado para o período informado'
-        };
-      }
-
-      // 2. Buscar serviços da empresa (opcional)
-      const servicosEmpresa = await this.volumetriaService.buscarServicosPorEmpresa(empresaId);
-
-      // 3. Mapear dados para contrato Omie
-      const dadosContrato = this.volumetriaService.mapearParaContratoOmie(
-        volumetriaData[0], 
-        dadosEmpresa
-      );
-      
-      this.logger.log(`Dados do contrato mapeado: ${JSON.stringify(dadosContrato)}`);
-
-      // 4. Criar contrato no Omie
-      const contractModel = this.createContractModel(dadosContrato);
-      this.logger.log(`Modelo do contrato Omie: ${JSON.stringify(contractModel)}`);
-      
-      const response = await this.omieService.incluirContrato(contractModel);
-      this.logger.log(`Resposta da criação do contrato Omie: ${JSON.stringify(response)}`);
-
-      return {
-        success: response.cCodStatus === '0',
-        contractId: response.nCodCtr,
-        integrationCode: response.cCodIntCtr,
-        message: response.cDescStatus,
-        volumetriaData: volumetriaData[0],
-        servicosEmpresa: servicosEmpresa,
-        contractData: dadosContrato
-      };
-    } catch (error) {
-      this.logger.error(`Erro na criação do contrato a partir da volumetria: ${error.message}`);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async getVolumetriaData(empresaId: string, dataInicial: string, dataFinal: string) {
-    try {
-      const volumetriaData = await this.volumetriaService.consultarVolumetria({
-        dataInicial,
-        dataFinal,
-        empresas: empresaId
-      });
-
-      const servicosEmpresa = await this.volumetriaService.buscarServicosPorEmpresa(empresaId);
-
-      return {
-        success: true,
-        volumetria: volumetriaData,
-        servicos: servicosEmpresa,
-        contratoMapeado: volumetriaData && volumetriaData.length > 0 ? 
-          this.volumetriaService.mapearParaContratoOmie(volumetriaData[0]) : null
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async createContract(contractData: any) {
-    try {
-      const contractModel = this.createContractModel(contractData);
-      const response = await this.omieService.incluirContrato(contractModel);
-      
-      return {
-        success: response.cCodStatus === '0',
-        contractId: response.nCodCtr,
-        integrationCode: response.cCodIntCtr,
-        message: response.cDescStatus
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async getContract(contractKey: any) {
-    try {
-      const response = await this.omieService.consultarContrato(contractKey);
-      
-      return {
-        success: !!response.contratoCadastro,
-        contract: response.contratoCadastro || null
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async listContracts(listParams: any = {}) {
-    try {
-      const listRequest = this.createListRequest(listParams);
-      const response = await this.omieService.listarContratos(listRequest);
-      
-      return {
-        success: true,
-        pagina: response.pagina,
-        total_de_paginas: response.total_de_paginas,
-        registros: response.registros,
-        total_de_registros: response.total_de_registros,
-        contratos: response.contratoCadastro || []
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async updateContract(contractData: any) {
-    try {
-      const contractModel = this.createContractModel(contractData);
-      const response = await this.omieService.alterarContrato(contractModel);
-      
-      return {
-        success: response.cCodStatus === '0',
-        contractId: response.nCodCtr,
-        integrationCode: response.cCodIntCtr,
-        message: response.cDescStatus
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async upsertContract(contractData: any) {
-    try {
-      const contractModel = this.createContractModel(contractData);
-      const response = await this.omieService.upsertContrato(contractModel);
-      
-      return {
-        success: response.cCodStatus === '0',
-        contractId: response.nCodCtr,
-        integrationCode: response.cCodIntCtr,
-        message: response.cDescStatus
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async deleteContractItem(contractKey: any, itemsToDelete: any) {
-    try {
-      const response = await this.omieService.excluirItem(contractKey, itemsToDelete);
-      
-      return {
-        success: response.cCodStatus === '0',
-        message: response.cDescStatus
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  private createContractModel(contractData: any) {
-    return {
-      cabecalho: {
-        cCodIntCtr: contractData.cCodIntCtr || '',
-        cNumCtr: contractData.cNumCtr || '',
-        nCodCli: contractData.nCodCli || 0,
-        cCodSit: contractData.cCodSit || '10',
-        dVigInicial: contractData.dVigInicial || '',
-        dVigFinal: contractData.dVigFinal || '',
-        nDiaFat: contractData.nDiaFat || 0,
-        nValTotMes: contractData.nValTotMes || 0,
-        cTipoFat: contractData.cTipoFat || '01'
-      },
-      departamentos: [],
-      infAdic: contractData.infAdic || {
-        cCidPrestServ: '',
-        cCodCateg: '',
-        nCodProj: 0,
-        nCodVend: 0
-      },
-      vencTextos: contractData.vencTextos || {
-        cTpVenc: '001',
-        nDias: 5,
-        cProxMes: 'N',
-        cAdContrato: 'N'
-      },
-      itensContrato: contractData.itensContrato || [],
-      emailCliente: {
-        cEnviarBoleto: 'N',
-        cEnviarLinkNfse: 'N',
-        cEnviarRecibo: 'N',
-        cUtilizarEmails: ''
-      },
-      observacoes: {
-        cObsContrato: ''
-      }
-    };
-  }
 
   private createListRequest(params: any) {
     return {
