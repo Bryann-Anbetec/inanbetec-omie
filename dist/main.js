@@ -2619,8 +2619,8 @@ let ContractsService = ContractsService_1 = class ContractsService {
                 }
             ],
             emailCliente: {
-                cEnviarBoleto: 'N',
-                cEnviarLinkNfse: 'N',
+                cEnviarBoleto: 'S',
+                cEnviarLinkNfse: 'S',
                 cEnviarRecibo: 'N',
                 cUtilizarEmails: ''
             }
