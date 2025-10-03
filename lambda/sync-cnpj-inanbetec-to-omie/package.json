@@ -1,0 +1,15 @@
+{
+  "name": "sync-cnpj-inanbetec-to-omie",
+  "version": "1.0.0",
+  "description": "Lambda para sincronização de clientes InAnbetec → Omie via CNPJ",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "zip -r function.zip . && aws lambda update-function-code --function-name sync-cnpj-inanbetec-to-omie --zip-file fileb://function.zip"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "typescript": "^5.0.0"
+  }
+}

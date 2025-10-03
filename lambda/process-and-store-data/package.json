@@ -1,0 +1,19 @@
+{
+  "name": "process-and-store-data",
+  "version": "1.0.0",
+  "description": "Lambda para processar dados de volumetria e gravar no banco",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "zip -r function.zip . && aws lambda update-function-code --function-name process-and-store-data --zip-file fileb://function.zip"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1400.0",
+    "mongodb": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/aws-sdk": "^2.7.0",
+    "typescript": "^5.0.0"
+  }
+}

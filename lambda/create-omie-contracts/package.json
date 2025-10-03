@@ -1,0 +1,23 @@
+{
+  "name": "create-omie-contracts",
+  "version": "1.0.0",
+  "description": "Lambda function para criar contratos no Omie",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc index.ts --target es2020 --module commonjs",
+    "package": "npm run build && zip -r function.zip index.js ../shared/",
+    "deploy": "aws lambda update-function-code --function-name create-omie-contracts --zip-file fileb://function.zip"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1522.0",
+    "axios": "^1.6.2",
+    "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.131",
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3"
+  },
+  "author": "InAnbetec",
+  "license": "ISC"
+}
